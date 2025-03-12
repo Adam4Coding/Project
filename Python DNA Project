@@ -1,46 +1,68 @@
-import random
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-def predict_inheritance(parent1, parent2, dominant_trait):
+def generate_offspring_data(parent1, parent2):
     """
-    Simulates inheritance of a genetic trait from two parents.
+    Generates a dataset of possible offspring genotypes from given parent genotypes.
     
     Parameters:
     parent1 (str): Genetic makeup of first parent (e.g., 'AA', 'Aa', or 'aa')
     parent2 (str): Genetic makeup of second parent (e.g., 'AA', 'Aa', or 'aa')
-    dominant_trait (str): Name of the dominant trait (e.g., "Brown Eyes")
     
     Returns:
-    dict: Probabilities of offspring genotypes and likelihood of expressing the dominant trait.
+    pd.DataFrame: DataFrame containing simulated offspring genotype probabilities.
     """
-    
-    # Possible offspring combinations
     offspring_combinations = [p1 + p2 for p1 in parent1 for p2 in parent2]
-    
-    # Normalize genotype representation (AA, Aa, aA -> Aa)
     offspring_combinations = [''.join(sorted(g)) for g in offspring_combinations]
     
-    # Count genotype probabilities
     genotype_counts = {"AA": 0, "Aa": 0, "aa": 0}
     for genotype in offspring_combinations:
         genotype_counts[genotype] += 1
     
-    # Convert counts to percentages
     total = sum(genotype_counts.values())
     genotype_probabilities = {k: (v / total) * 100 for k, v in genotype_counts.items()}
     
-    # Probability of having the dominant trait (AA and Aa express the trait, aa does not)
-    dominant_probability = genotype_probabilities["AA"] + genotype_probabilities["Aa"]
+    df = pd.DataFrame(list(genotype_probabilities.items()), columns=["Genotype", "Probability (%)"])
+    return df
+
+def visualize_inheritance(df, dominant_trait):
+    """
+    Visualizes genotype probabilities using a bar chart.
     
-    # Print results
-    print("Genetic Inheritance Prediction:")
-    print(f"Genotype probabilities: {genotype_probabilities}")
-    print(f"Chance of expressing {dominant_trait}: {dominant_probability:.2f}%")
+    Parameters:
+    df (pd.DataFrame): DataFrame containing genotype probabilities.
+    dominant_trait (str): Name of the dominant trait (e.g., "Brown Eyes").
+    """
+    plt.figure(figsize=(8, 5))
+    sns.barplot(x=df["Genotype"], y=df["Probability (%)"], palette="coolwarm")
+    plt.xlabel("Genotype")
+    plt.ylabel("Probability (%)")
+    plt.title(f"Genotype Distribution for {dominant_trait}")
+    plt.ylim(0, 100)
+    plt.show()
+
+def analyze_data(df):
+    """
+    Performs data analysis on the genetic inheritance dataset.
     
-    return genotype_probabilities, dominant_probability
+    Parameters:
+    df (pd.DataFrame): DataFrame containing genotype probabilities.
+    
+    Returns:
+    None
+    """
+    print("\nGenetic Data Analysis:")
+    print(df.describe())
+    print("\nMost likely genotype:", df.loc[df["Probability (%)"].idxmax(), "Genotype"])
+    print("Least likely genotype:", df.loc[df["Probability (%)"].idxmin(), "Genotype"])
 
 # Example usage
 parent1_genotype = "Aa"  # First parent's genotype
 parent2_genotype = "Aa"  # Second parent's genotype
 dominant_trait_name = "Brown Eyes"
 
-predict_inheritance(parent1_genotype, parent2_genotype, dominant_trait_name)
+offspring_df = generate_offspring_data(parent1_genotype, parent2_genotype)
+visualize_inheritance(offspring_df, dominant_trait_name)
+analyze_data(offspring_df)
