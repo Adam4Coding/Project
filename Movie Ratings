@@ -1,0 +1,63 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load Movie Ratings Dataset
+data = pd.read_csv("imdb_1000.csv")  # Ensure you have this dataset in the same directory
+
+# Display first 5 rows
+data.head()
+
+# Data Cleaning: Remove duplicates and missing values
+data = data.dropna()
+data = data.drop_duplicates()
+
+# Convert content rating to categorical type
+data['content_rating'] = data['content_rating'].astype('category')
+
+# Basic Statistical Summary
+print("Basic Dataset Statistics:\n", data.describe())
+
+# Analyzing the Distribution of Movie Ratings
+plt.figure(figsize=(8, 5))
+sns.histplot(data['star_rating'], bins=10, kde=True, color='skyblue')
+plt.xlabel("Star Rating")
+plt.ylabel("Frequency")
+plt.title("Distribution of Movie Ratings")
+plt.grid(True)
+plt.show()
+
+# Top 10 Most Common Genres
+top_genres = data['genre'].value_counts().head(10)
+
+# Visualizing Top 10 Genres
+plt.figure(figsize=(10, 5))
+sns.barplot(x=top_genres.values, y=top_genres.index, palette='coolwarm')
+plt.xlabel("Number of Movies")
+plt.ylabel("Genre")
+plt.title("Top 10 Most Common Movie Genres")
+plt.show()
+
+# Average Rating per Genre
+genre_ratings = data.groupby("genre")["star_rating"].mean().sort_values(ascending=False)
+
+# Visualizing Average Ratings by Genre
+plt.figure(figsize=(10, 5))
+sns.barplot(x=genre_ratings.values, y=genre_ratings.index, palette='viridis')
+plt.xlabel("Average Star Rating")
+plt.ylabel("Genre")
+plt.title("Average Movie Ratings by Genre")
+plt.show()
+
+# Correlation Analysis
+correlation = data[['star_rating']].corr()
+print("\nCorrelation Analysis:\n", correlation)
+
+# Visualizing correlation matrix
+plt.figure(figsize=(5, 4))
+sns.heatmap(correlation, annot=True, cmap='coolwarm', fmt='.2f')
+plt.title("Correlation Matrix of Movie Ratings")
+plt.show()
+
+print("Movie Ratings Data Analysis Completed!")
