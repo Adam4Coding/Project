@@ -1,0 +1,46 @@
+import random
+
+def predict_inheritance(parent1, parent2, dominant_trait):
+    """
+    Simulates inheritance of a genetic trait from two parents.
+    
+    Parameters:
+    parent1 (str): Genetic makeup of first parent (e.g., 'AA', 'Aa', or 'aa')
+    parent2 (str): Genetic makeup of second parent (e.g., 'AA', 'Aa', or 'aa')
+    dominant_trait (str): Name of the dominant trait (e.g., "Brown Eyes")
+    
+    Returns:
+    dict: Probabilities of offspring genotypes and likelihood of expressing the dominant trait.
+    """
+    
+    # Possible offspring combinations
+    offspring_combinations = [p1 + p2 for p1 in parent1 for p2 in parent2]
+    
+    # Normalize genotype representation (AA, Aa, aA -> Aa)
+    offspring_combinations = [''.join(sorted(g)) for g in offspring_combinations]
+    
+    # Count genotype probabilities
+    genotype_counts = {"AA": 0, "Aa": 0, "aa": 0}
+    for genotype in offspring_combinations:
+        genotype_counts[genotype] += 1
+    
+    # Convert counts to percentages
+    total = sum(genotype_counts.values())
+    genotype_probabilities = {k: (v / total) * 100 for k, v in genotype_counts.items()}
+    
+    # Probability of having the dominant trait (AA and Aa express the trait, aa does not)
+    dominant_probability = genotype_probabilities["AA"] + genotype_probabilities["Aa"]
+    
+    # Print results
+    print("Genetic Inheritance Prediction:")
+    print(f"Genotype probabilities: {genotype_probabilities}")
+    print(f"Chance of expressing {dominant_trait}: {dominant_probability:.2f}%")
+    
+    return genotype_probabilities, dominant_probability
+
+# Example usage
+parent1_genotype = "Aa"  # First parent's genotype
+parent2_genotype = "Aa"  # Second parent's genotype
+dominant_trait_name = "Brown Eyes"
+
+predict_inheritance(parent1_genotype, parent2_genotype, dominant_trait_name)
