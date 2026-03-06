@@ -1,0 +1,220 @@
+# Medical Data Statistical Analysis
+# Author: Adam Jada
+# Tools: R
+# Description: Statistical analysis of medical patient data including
+# linear regression, multiple regression, one-way ANOVA, and two-way ANOVA
+# to analyze body composition and triglyceride patterns across patient groups
+
+# Import data
+med <- read.csv("medicaldata2.csv", header = TRUE)
+str(med)
+
+# Task 1: Convert vartaibles to factors
+med$Gallstone_Status <- factor(med$Gallstone_Status,
+                               levels = c(0,1),
+                               labels = c("Yes", "No"))
+
+med$Comorbidity <- factor(med$Comorbidity,
+                          levels = c(0,1,2,3),
+                          labels = c("0", "1","2", "3"),
+                          ordered = TRUE)
+
+med$CAD <- factor(med$CAD,
+                  levels = c(0,1),
+                  labels = c("No", "Yes"))
+
+med$Diabetes_Mellitus <- factor(med$Diabetes_Mellitus,
+                                levels = c(0,1),
+                                labels = c("No", "Yes"))
+
+med$Hepatic_Fat_Accumulation <- factor(med$Hepatic_Fat_Accumulation,
+                                       levels = c(0,1,2,3),
+                                       labels = c("0", "1", "2","3"),
+                                       ordered = TRUE)
+
+med$Age_Class <- factor(med$Age_Class,
+                        levels = c("Younger", "Lower Middle",
+                                   "Upper Middle", "Elder"),
+                        ordered = TRUE)
+str(med)
+
+# Task 2: Linear Regression Model
+# Scatterplot
+plot(med$Body_Protein_Content, med$Total_Body_Fat_Ratio, 
+     xlab = "Body Protein Content (%)",
+     ylab = "Total Body Fat Ratiio (%)",
+     main = "Total Body Fat vs Body Protein Content")
+# Linear Regression
+fat_model <- lm(Total_Body_Fat_Ratio ~ Body_Protein_Content, data = med)
+fat_summary <- summary(fat_model)
+fat_summary
+
+# Extract the slope, R Squared and Intercept
+fat_intercept <- coef(fat_model)[1]
+fat_slope <- coef(fat_model)[2]
+fat_R2 <- fat_summary$r.squared
+
+fat_intercept; fat_slope; fat_R2
+
+# Assumptions
+fat_resid <- residuals(fat_model)
+fat_fitted <- fitted(fat_model)
+
+# Linearity Check
+plot(med$Body_Protein_Content, fat_resid,
+     xlab = "Body Protein Content",
+     ylab = "Residuals",
+     main = "Residuals vs Body Protein Content")
+abline(h = 0, lty = 2)
+
+# Normality
+qqnorm(fat_resid, main = "Q-Q Plot (Task 2 Residuals)")
+qqline(fat_resid, col = "red")
+
+fat_norm_test <- shapiro.test(fat_resid)
+fat_norm_test
+
+# Equal Variance check
+plot(fat_fitted, fat_resid,
+     xlab = "Fitted Values",
+     ylab = "Residuals",
+     main = "Residuals vs Fitted (Task 2)")
+abline(h = 0, lty = 2)
+
+# Correlation
+fat_r <- cor(med$Body_Protein_Content, med$Total_Body_Fat_Ratio,
+             use = "complete.obs")
+fat_r
+
+# Task 3: Multiple Linear Regression
+water_model <- lm(Total_Body_Water ~ Height + Weight + Body_Protein_Content,
+                  data = med)
+water_summary <- summary(water_model)
+water_summary
+
+# R squared
+water_R2 <- water_summary$r.squared
+water_R2adj <- water_summary$adj.r.squared
+water_R2; water_R2adj
+
+# Assumptions
+water_resid <- residuals(water_model)
+water_fitted <- fitted(water_model)
+
+# Linearity Plots
+par(mfrow = c(1,3))
+
+plot(med$Height, water_resid,
+     main = "Res vs Height", xlab = "Height", ylab = "Residuals")
+abline(h = 0, lty = 2)
+
+plot(med$Weight, water_resid,
+     main = "Res vs Weight", xlab = "Weight", ylab = "Residuals")
+abline(h = 0, lty = 2)
+
+plot(med$Body_Protein_Content, water_resid,
+     main = "Res vs Protein", xlab = "Protein Content", ylab = "Residuals")
+abline(h = 0, lty = 2)
+
+par(mfrow=c(1,1))
+
+# Normality
+qqnorm(water_resid, main = "Task 3 Q-Q Plot")
+qqline(water_resid, col = "red")
+
+water_norm_test <- shapiro.test(water_resid)
+water_norm_test
+
+# Equal variance
+plot(water_fitted, water_resid,
+     main = "Residuals vs Fitted",
+     xlab = "Fitted Values", ylab = "Residuals")
+abline(h = 0, lty = 2)
+
+# Independence residuals vs order
+water_summary$fstatistic
+plot(water_resid, type = "b",
+     main = "Residuals vs Order (Independence Check)",
+     xlab = "Observation Index", ylab = "Residuals")
+abline(h = 0, lty = 2)
+
+# Partial Tests
+coef_table3 <- water_summary$coefficients
+coef_table3
+
+p_height <- coef_table3["Height", "Pr(>|t|)"]
+p_weight <- coef_table3["Weight", "Pr(>|t|)"]
+p_protein <- coef_table3["Body_Protein_Content", "Pr(>|t|)"]
+
+p_height; p_weight; p_protein
+
+# Task 4: One way anova test
+age_model <- aov(Total_Body_Fat_Ratio ~ Age_Class, data = med)
+age_anova <- anova(age_model)
+age_anova
+
+# Normality
+age_resid <- residuals(age_model)
+
+qqnorm(age_resid, main = "Age Class ANOVA Q-Q Plot")
+qqline(age_resid, col = "red")
+
+age_norm_test <- shapiro.test(age_resid)
+age_norm_test
+
+# Equal variance
+age_var_test <- bartlett.test(Total_Body_Fat_Ratio ~ Age_Class, data = med)
+age_var_test
+
+# Tukey
+age_tukey <- TukeyHSD(age_model, conf.level = 0.98)
+age_tukey
+
+boxplot(Total_Body_Fat_Ratio ~ Age_Class, data = med,
+        main = "Total Body Fat Ratio by Age Class",
+        xlab = "Age Class",
+        ylab = "Total Body Fat Ratio (%)")
+
+# Task 5: Two Way ANOVA
+
+# Barplots
+diab_means <- tapply(med$Triglyceride, med$Diabetes_Mellitus, mean)
+hep_means <- tapply(med$Triglyceride, med$Hepatic_Fat_Accumulation, mean)
+
+barplot(diab_means, main = "Triglyceride by Diabetes Status",
+        xlab = "Diabetes", ylab = "Mean Triglyceride")
+
+barplot(hep_means, main = "Triglyceride by Hepatic Fat Grade",
+        xlab = "Fat Grade", ylab = "Mean Triglyceride")
+
+# Two way model
+tri_model <- aov(Triglyceride ~ Diabetes_Mellitus * Hepatic_Fat_Accumulation,
+                 data = med)
+tri_anova <- anova(tri_model)
+tri_anova
+
+# Normality 
+tri_resid <- residuals(tri_model)
+qqnorm(tri_resid, main = "Task 5 Q-Q Plot")
+qqline(tri_resid, col = "red")
+
+tri_norm_test <- shapiro.test(tri_resid)
+tri_norm_test
+
+# Variance
+med$Group <- interaction(med$Diabetes_Mellitus, med$Hepatic_Fat_Accumulation)
+
+bartlett_test <- bartlett.test(Triglyceride ~ Group, data = med)
+bartlett_test
+
+# Interaction significance 
+p_interaction <- tri_anova["Diabetes_Mellitus:Hepatic_Fat_Accumulation", "Pr(>F)"]
+F_interaction <- tri_anova["Diabetes_Mellitus:Hepatic_Fat_Accumulation", "F value"]
+
+p_interaction; F_interaction
+
+# Main effects
+p_diabetes <- tri_anova["Diabetes_Mellitus", "Pr(>F)"]
+p_hepatic <- tri_anova["Hepatic_Fat_Accumulation", "Pr(>F)"]
+
+p_diabetes; p_hepatic
