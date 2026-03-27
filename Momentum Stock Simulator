@@ -1,0 +1,48 @@
+import yfinance as yf
+import pandas as pd
+import numpy as np
+
+# Random Stocks that are popular
+tickers = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'JPM', 
+           'BAC', 'GS', 'TSLA', 'NVDA', 'NFLX',
+           'JNJ', 'PFE', 'XOM', 'CVX', 'WMT']
+
+data = yf.download(tickers, start='2025-01-01', end='2026-03-27',
+auto_adjust=True)['Close']
+monthly_returns = data.resample('ME').last().pct_change(fill_method=None)
+
+# past 12-month return 
+momentum = monthly_returns.shift(1).rolling(12).sum()
+
+results = []
+
+for date in monthly_returns.index[13:]:
+    signal = momentum.loc[date]
+    forward_return = monthly_returns.loc[date]
+    
+    # Go long top 3, short bottom 3
+    long = signal.nlargest(3).index
+    short = signal.nsmallest(3).index
+    
+    portfolio_return = (
+        forward_return[long].mean() - forward_return[short].mean()
+    )
+    results.append({'date': date, 'return': portfolio_return})
+
+results_df = pd.DataFrame(results).set_index('date')
+
+cumulative = (1 + results_df['return']).cumprod()
+sharpe = results_df['return'].mean() / results_df['return'].std() * np.sqrt(12)
+max_drawdown = (cumulative / cumulative.cummax() - 1).min()
+
+print(f"Annualized Sharpe Ratio: {sharpe:.2f}")
+print(f"Max Drawdown: {max_drawdown:.2%}")
+print(f"Total Return: {cumulative.iloc[-1]-1:.2%}")
+
+import matplotlib.pyplot as plt
+
+cumulative.plot(title='Momentum Strategy Cumulative Returns')
+plt.ylabel('Portfolio Value')
+plt.xlabel('Date')
+plt.savefig('momentum_backtest.png')
+plt.show()
