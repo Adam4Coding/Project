@@ -1,0 +1,194 @@
+Build a full-stack vendor marketplace web app called "Cartly" — a platform where specialty 
+cart vendors (matcha bars, mocktail carts, churro carts, espresso carts, crepe carts, 
+lemonade carts, mini donut carts, elote carts, etc.) pay a monthly subscription to list 
+their business, while customers browse and book them for free for events, parties, 
+pop-ups, and activations.
+
+---
+
+## Tech Stack
+- Frontend: React + Tailwind CSS v4
+- Backend: Node.js + Express
+- Database: SQLite (via better-sqlite3)
+- Auth: JWT in-memory (NO localStorage — store token in React context/state only)
+- No real payment API — mock the vendor subscription flow
+
+---
+
+## Core User Roles
+
+### Customer (Free)
+- Sign up / log in
+- Browse Explore page with search and filters
+- View vendor profiles
+- Send a booking request (date, event type, guest count, location, message)
+- Track bookings (Pending / Confirmed / Declined) from their dashboard
+- Save favorite vendors (heart toggle on cards)
+- Leave a review after a confirmed booking
+
+### Vendor (Paid — mock $59/mo)
+- Sign up and build a profile (cart name, category, description, photos, 
+  service area, starting price, availability)
+- Go through a multi-step onboarding flow before going live
+- Manage incoming booking requests (accept/decline with a note)
+- Edit profile and toggle availability
+- View a stats dashboard: bookings, profile views, avg rating (use mock/seed data)
+- Inactive vendors (unsubscribed) are hidden from Explore entirely
+
+---
+
+## Pages
+
+### 1. Landing Page (/)
+- Bold hero section: headline "Book the cart everyone's talking about"
+  with a search bar (location + cart type)
+- Horizontal scrollable category pills with emoji icons:
+  🍵 Matcha  🍹 Mocktails  🥐 Churros  ☕ Espresso  🍋 Lemonade 
+  🧇 Mini Donuts  🥞 Crepes  🌽 Elote  🍫 Hot Choco  🧃 Juice Bar
+- "Trending near you" vendor card row (seeded mock data)
+- How it works: 3 steps for customers, 3 steps for vendors
+- Social proof strip: "500+ carts listed · 10k+ events booked · 4.9★ avg rating"
+- Footer with links
+
+### 2. Explore Page (/explore)
+- Responsive card grid (3 cols desktop, 2 tablet, 1 mobile)
+- Each card: cover photo, cart name, category badge, city, starting price, 
+  star rating, "Book Now" button, heart icon to save
+- Left sidebar filters (collapsible on mobile):
+  - Category (multi-select checkboxes)
+  - City / service area (text input)
+  - Price range (dual-handle slider: $0–$2000+)
+  - Rating (tap stars to filter 4★+)
+  - Available on (date picker)
+- Skeleton shimmer cards while loading
+- Empty state: animated icon + "No carts found. Try adjusting your filters."
+- "Load More" pagination button
+
+### 3. Vendor Profile Page (/vendor/:id)
+- Full-width cover image with gradient overlay, cart name, and category badge
+- Photo gallery grid (3-4 portfolio images)
+- Bio, service area, pricing tiers (Basic / Full Package / Custom)
+- Star rating display + total reviews
+- Availability calendar (visual, read-only)
+- "Book This Cart" sticky CTA button → opens booking modal
+- Booking modal fields: Event date, Event type (dropdown: Birthday, Baby Shower, 
+  Corporate, Wedding, Pop-up, Other), Guest count, Location/venue, Message
+- Reviews section: star rating, reviewer name, date, body text
+
+### 4. Customer Dashboard (/dashboard/customer)
+- Tabs: Bookings | Saved Carts
+- Bookings tab: cards with status chips (Pending 🟡 / Confirmed 🟢 / Declined 🔴), 
+  vendor name, event date, action to leave review after confirmed
+- Saved tab: grid of saved vendor cards
+
+### 5. Vendor Dashboard (/dashboard/vendor)
+- Top stats row: Total Bookings · Pending Requests · Profile Views · Avg Rating
+- Booking requests table: customer name, event date, event type, guest count, 
+  status, Accept / Decline buttons (decline opens a small text input for reason)
+- Profile editor tab: all profile fields editable, photo upload (base64 preview)
+- Subscription card: plan status (Active / Inactive), mock "Renew Plan" button
+- Inactive banner at top of all vendor pages: 
+  "Your cart is hidden from Explore. Resubscribe to go live."
+
+### 6. Vendor Onboarding (/onboarding) — 4-step wizard after signup
+- Step 1: Cart name, category, bio, city/service area
+- Step 2: Upload 1 cover photo + up to 4 portfolio photos (file input, base64 preview)
+- Step 3: Set pricing (starting price input + 2-3 package rows: name + price + description)
+- Step 4: Mock subscription screen — plan card ($59/mo), "Activate & Go Live" button
+- Completion screen with confetti animation + "Your cart is live! View your profile →"
+
+### 7. Auth Pages (/login, /signup)
+- Signup has a role toggle: "I'm looking for carts" vs "I'm a vendor"
+- Vendor signup shows extra fields: cart name, category, city
+- Clean centered card, inline form validation, no page reloads
+
+---
+
+## Design System — Clean, Creative, Elevated
+
+### Typography
+- Display/headings: Fraunces (Google Fonts) — editorial serif with warmth
+- Body/UI: Satoshi (Fontshare) — clean modern sans-serif
+- Max heading size in app UI: --text-xl (no oversized display text inside the app itself)
+- Landing page hero only: --text-2xl
+
+### Color Palette
+- Background: warm off-white #f9f6f1
+- Surface cards: #ffffff with subtle warm shadow
+- Primary accent: deep matcha green #2d6a4f (buttons, links, active states)
+- Secondary: terracotta #c1440e (badges, highlights)
+- Text: near-black #1a1a18, muted: #6b6b68
+- Dark mode: deep charcoal #141410 base, surfaces #1e1e1a
+
+### Visual Style
+- Rounded cards: border-radius 16px on cards, 12px on inputs/badges
+- Soft layered shadows (tone-matched to warm surfaces)
+- Vendor category badges: pill shape, subtle terracotta fill
+- Status chips: soft green/yellow/red with icon
+- No gradient buttons — solid matcha green only
+- No colored side-borders on cards — use surface elevation only
+- Subtle grain texture overlay on hero section (CSS SVG feTurbulence, opacity 0.03)
+- Card hover: lift with shadow increase + slight scale(1.02), smooth 180ms ease
+
+### Layout
+- Max content width: 1200px, centered with auto margins
+- Mobile-first: works at 375px, 768px, 1280px
+- Bottom tab nav on mobile (Explore | Bookings | Saved | Profile)
+- Top sticky nav on desktop with logo left, links center, auth buttons right
+
+### Motion
+- Page transitions: fade-in on mount (opacity 0→1, translateY 8px→0, 220ms)
+- Skeleton shimmer on loading states
+- Booking modal: slide up from bottom on mobile, scale-in from center on desktop
+- Confetti on onboarding completion
+- Number counters animate on dashboard stats load
+- Reduced motion respected via prefers-reduced-motion
+
+### SVG Logo
+- Inline SVG: stylized cart wheel or abstract "C" with a small leaf/steam element
+- Works at 24px and 200px, uses currentColor for dark/light mode
+
+---
+
+## Data Model (SQLite)
+
+users: id, email, password_hash, role (customer|vendor), name, created_at
+vendor_profiles: id, user_id, cart_name, category, bio, city, cover_photo, 
+                 gallery_photos (JSON array), starting_price, packages (JSON), 
+                 is_active, subscription_status, avg_rating, profile_views
+bookings: id, customer_id, vendor_id, event_date, event_type, guest_count, 
+          location, message, status (pending|confirmed|declined), 
+          vendor_note, created_at
+reviews: id, booking_id, customer_id, vendor_id, rating (1-5), body, created_at
+saved_vendors: id, customer_id, vendor_id
+
+---
+
+## API Routes
+
+POST   /api/auth/signup
+POST   /api/auth/login
+GET    /api/vendors?category=&city=&minPrice=&maxPrice=&rating=
+GET    /api/vendors/:id
+PUT    /api/vendors/:id            (vendor auth)
+POST   /api/bookings               (customer auth)
+GET    /api/bookings/mine          (customer)
+GET    /api/bookings/requests      (vendor)
+PUT    /api/bookings/:id/respond   (vendor — accept/decline)
+POST   /api/reviews                (customer, after confirmed booking)
+POST   /api/saved/:vendorId        (customer — toggle)
+GET    /api/saved                  (customer)
+POST   /api/subscription/activate  (vendor — mock)
+
+---
+
+## Seed Data
+Seed 12 vendors across these categories (2 per category):
+Matcha, Mocktails, Churros, Espresso, Crepes, Mini Donuts
+Each vendor gets: realistic cart name, bio, city (mix of Chicago, LA, NYC, Austin, Miami), 
+starting price ($200–$800), 2–3 reviews, mock profile view count.
+Use https://picsum.photos/seed/{vendor-name}/800/500 for cover photos.
+
+Demo accounts:
+  Customer: hello@demo.com / demo1234
+  Vendor:   cart@demo.com / demo1234 (active subscription, Chicago Matcha Bar)

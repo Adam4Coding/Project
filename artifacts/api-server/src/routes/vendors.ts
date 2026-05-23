@@ -1,0 +1,302 @@
+import { Router, type IRouter } from "express";
+import { db } from "@workspace/db";
+import { vendorProfilesTable, usersTable, savedVendorsTable } from "@workspace/db";
+import { eq, and, gte, lte, sql } from "drizzle-orm";
+import { requireAuth, requireVendorAuth, type AuthenticatedRequest } from "../lib/auth";
+import { ListVendorsQueryParams, UpdateMyVendorProfileBody, CompleteOnboardingBody } from "@workspace/api-zod";
+
+const router: IRouter = Router();
+
+function parseVendorProfile(vp: typeof vendorProfilesTable.$inferSelect) {
+  return {
+    id: vp.id,
+    userId: vp.userId,
+    cartName: vp.cartName,
+    category: vp.category,
+    bio: vp.bio,
+    city: vp.city,
+    coverPhoto: vp.coverPhoto,
+    galleryPhotos: JSON.parse(vp.galleryPhotos || "[]"),
+    startingPrice: vp.startingPrice,
+    packages: JSON.parse(vp.packages || "[]"),
+    isActive: vp.isActive,
+    subscriptionStatus: vp.subscriptionStatus,
+    avgRating: vp.avgRating,
+    profileViews: vp.profileViews,
+    onboardingComplete: vp.onboardingComplete,
+    totalReviews: 0,
+    isSaved: false,
+  };
+}
+
+function parseVendorSummary(vp: typeof vendorProfilesTable.$inferSelect) {
+  return {
+    id: vp.id,
+    cartName: vp.cartName,
+    category: vp.category,
+    city: vp.city,
+    coverPhoto: vp.coverPhoto,
+    startingPrice: vp.startingPrice,
+    avgRating: vp.avgRating,
+    isActive: vp.isActive,
+    subscriptionStatus: vp.subscriptionStatus,
+    onboardingComplete: vp.onboardingComplete,
+  };
+}
+
+router.get("/vendors/trending", async (_req, res): Promise<void> => {
+  const vendors = await db
+    .select()
+    .from(vendorProfilesTable)
+    .where(and(eq(vendorProfilesTable.isActive, true), eq(vendorProfilesTable.subscriptionStatus, "active")))
+    .orderBy(sql`${vendorProfilesTable.avgRating} DESC`)
+    .limit(8);
+
+  res.json({ vendors: vendors.map(parseVendorSummary), total: vendors.length });
+});
+
+router.get("/vendors/me", requireVendorAuth, async (req, res): Promise<void> => {
+  const authReq = req as AuthenticatedRequest;
+  const [vp] = await db
+    .select()
+    .from(vendorProfilesTable)
+    .where(eq(vendorProfilesTable.userId, authReq.user!.userId))
+    .limit(1);
+
+  if (!vp) {
+    res.status(404).json({ message: "Vendor profile not found" });
+    return;
+  }
+
+  res.json({ vendor: parseVendorProfile(vp) });
+});
+
+router.put("/vendors/me", requireVendorAuth, async (req, res): Promise<void> => {
+  const authReq = req as AuthenticatedRequest;
+  const parsed = UpdateMyVendorProfileBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ message: parsed.error.message });
+    return;
+  }
+
+  const { cartName, category, bio, city, coverPhoto, galleryPhotos, startingPrice, packages, isActive } = parsed.data;
+  const updateData: Partial<typeof vendorProfilesTable.$inferInsert> = {};
+  if (cartName !== undefined) updateData.cartName = cartName;
+  if (category !== undefined) updateData.category = category;
+  if (bio !== undefined) updateData.bio = bio;
+  if (city !== undefined) updateData.city = city;
+  if (coverPhoto !== undefined) updateData.coverPhoto = coverPhoto;
+  if (galleryPhotos !== undefined) updateData.galleryPhotos = JSON.stringify(galleryPhotos);
+  if (startingPrice !== undefined) updateData.startingPrice = startingPrice;
+  if (packages !== undefined) updateData.packages = JSON.stringify(packages);
+  if (isActive !== undefined) updateData.isActive = isActive;
+
+  const [vp] = await db
+    .update(vendorProfilesTable)
+    .set(updateData)
+    .where(eq(vendorProfilesTable.userId, authReq.user!.userId))
+    .returning();
+
+  if (!vp) {
+    res.status(404).json({ message: "Vendor profile not found" });
+    return;
+  }
+
+  res.json({ vendor: parseVendorProfile(vp) });
+});
+
+router.get("/vendors", async (req, res): Promise<void> => {
+  const parsed = ListVendorsQueryParams.safeParse(req.query);
+  const params = parsed.success ? parsed.data : {};
+
+  const { category, city, minPrice, maxPrice, rating, limit = 12, offset = 0 } = params as {
+    category?: string; city?: string; minPrice?: number; maxPrice?: number;
+    rating?: number; limit?: number; offset?: number;
+  };
+
+  let query = db
+    .select()
+    .from(vendorProfilesTable)
+    .where(and(
+      eq(vendorProfilesTable.isActive, true),
+      eq(vendorProfilesTable.subscriptionStatus, "active"),
+    ));
+
+  const allVendors = await db
+    .select()
+    .from(vendorProfilesTable)
+    .where(and(
+      eq(vendorProfilesTable.isActive, true),
+      eq(vendorProfilesTable.subscriptionStatus, "active"),
+    ));
+
+  let filtered = allVendors;
+  if (category) {
+    filtered = filtered.filter(v => v.category.toLowerCase() === category.toLowerCase());
+  }
+  if (city) {
+    filtered = filtered.filter(v => v.city.toLowerCase().includes(city.toLowerCase()));
+  }
+  if (minPrice !== undefined) {
+    filtered = filtered.filter(v => v.startingPrice >= minPrice);
+  }
+  if (maxPrice !== undefined) {
+    filtered = filtered.filter(v => v.startingPrice <= maxPrice);
+  }
+  if (rating !== undefined) {
+    filtered = filtered.filter(v => v.avgRating >= rating);
+  }
+
+  const total = filtered.length;
+  const paginated = filtered.slice(Number(offset), Number(offset) + Number(limit));
+
+  res.json({ vendors: paginated.map(parseVendorSummary), total });
+});
+
+router.get("/vendors/:id", async (req, res): Promise<void> => {
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id = parseInt(raw, 10);
+  if (isNaN(id)) {
+    res.status(400).json({ message: "Invalid vendor id" });
+    return;
+  }
+
+  const [vp] = await db
+    .select()
+    .from(vendorProfilesTable)
+    .where(eq(vendorProfilesTable.id, id))
+    .limit(1);
+
+  if (!vp) {
+    res.status(404).json({ message: "Vendor not found" });
+    return;
+  }
+
+  // Increment profile views
+  await db
+    .update(vendorProfilesTable)
+    .set({ profileViews: vp.profileViews + 1 })
+    .where(eq(vendorProfilesTable.id, id));
+
+  // Check if customer saved this vendor
+  let isSaved = false;
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith("Bearer ")) {
+    const { verifyToken } = await import("../lib/auth");
+    const payload = verifyToken(authHeader.slice(7));
+    if (payload && payload.role === "customer") {
+      const saved = await db
+        .select()
+        .from(savedVendorsTable)
+        .where(and(
+          eq(savedVendorsTable.customerId, payload.userId),
+          eq(savedVendorsTable.vendorId, id),
+        ))
+        .limit(1);
+      isSaved = saved.length > 0;
+    }
+  }
+
+  const { reviewsTable } = await import("@workspace/db");
+  const reviews = await db.select().from(reviewsTable).where(eq(reviewsTable.vendorId, id));
+
+  const detail = parseVendorProfile(vp);
+  detail.profileViews = vp.profileViews + 1;
+  detail.totalReviews = reviews.length;
+  detail.isSaved = isSaved;
+
+  res.json({ vendor: detail });
+});
+
+router.post("/onboarding", requireVendorAuth, async (req, res): Promise<void> => {
+  const authReq = req as AuthenticatedRequest;
+  const parsed = CompleteOnboardingBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ message: parsed.error.message });
+    return;
+  }
+
+  const { cartName, category, bio, city, coverPhoto, galleryPhotos, startingPrice, packages, activateSubscription } = parsed.data;
+
+  const isActive = activateSubscription === true;
+  const subscriptionStatus = isActive ? "active" : "inactive";
+
+  const [vp] = await db
+    .update(vendorProfilesTable)
+    .set({
+      cartName,
+      category,
+      bio,
+      city,
+      coverPhoto: coverPhoto ?? "",
+      galleryPhotos: JSON.stringify(galleryPhotos ?? []),
+      startingPrice,
+      packages: JSON.stringify(packages ?? []),
+      isActive,
+      subscriptionStatus,
+      onboardingComplete: true,
+    })
+    .where(eq(vendorProfilesTable.userId, authReq.user!.userId))
+    .returning();
+
+  if (!vp) {
+    res.status(404).json({ message: "Vendor profile not found" });
+    return;
+  }
+
+  res.status(201).json({ vendor: parseVendorProfile(vp) });
+});
+
+router.get("/vendor-stats", requireVendorAuth, async (req, res): Promise<void> => {
+  const authReq = req as AuthenticatedRequest;
+
+  const [vp] = await db
+    .select()
+    .from(vendorProfilesTable)
+    .where(eq(vendorProfilesTable.userId, authReq.user!.userId))
+    .limit(1);
+
+  if (!vp) {
+    res.status(404).json({ message: "Vendor profile not found" });
+    return;
+  }
+
+  const { bookingsTable } = await import("@workspace/db");
+  const allBookings = await db
+    .select()
+    .from(bookingsTable)
+    .where(eq(bookingsTable.vendorId, vp.id));
+
+  const totalBookings = allBookings.length;
+  const pendingRequests = allBookings.filter(b => b.status === "pending").length;
+  const confirmedBookings = allBookings.filter(b => b.status === "confirmed").length;
+  const declinedBookings = allBookings.filter(b => b.status === "declined").length;
+
+  res.json({
+    totalBookings,
+    pendingRequests,
+    profileViews: vp.profileViews,
+    avgRating: vp.avgRating,
+    confirmedBookings,
+    declinedBookings,
+  });
+});
+
+router.post("/subscription/activate", requireVendorAuth, async (req, res): Promise<void> => {
+  const authReq = req as AuthenticatedRequest;
+  const [vp] = await db
+    .update(vendorProfilesTable)
+    .set({ subscriptionStatus: "active", isActive: true })
+    .where(eq(vendorProfilesTable.userId, authReq.user!.userId))
+    .returning();
+
+  if (!vp) {
+    res.status(404).json({ message: "Vendor profile not found" });
+    return;
+  }
+
+  res.json({ success: true, subscriptionStatus: "active" });
+});
+
+export default router;
+

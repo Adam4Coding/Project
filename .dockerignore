@@ -1,0 +1,11 @@
+node_modules
+.pnpm-store
+dist
+tmp
+coverage
+.git
+.gitignore
+.cache
+.local
+*.log
+.env

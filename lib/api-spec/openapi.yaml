@@ -1,0 +1,813 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: Cartly vendor marketplace API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: auth
+    description: Authentication operations
+  - name: vendors
+    description: Vendor profile operations
+  - name: bookings
+    description: Booking operations
+  - name: reviews
+    description: Review operations
+  - name: saved
+    description: Saved vendors operations
+  - name: subscription
+    description: Subscription operations
+  - name: health
+    description: Health operations
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /auth/signup:
+    post:
+      operationId: signup
+      tags: [auth]
+      summary: Sign up a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignupBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Log in
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /vendors:
+    get:
+      operationId: listVendors
+      tags: [vendors]
+      summary: List vendors with optional filters
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: city
+          in: query
+          schema:
+            type: string
+        - name: minPrice
+          in: query
+          schema:
+            type: number
+        - name: maxPrice
+          in: query
+          schema:
+            type: number
+        - name: rating
+          in: query
+          schema:
+            type: number
+        - name: availableOn
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: number
+        - name: offset
+          in: query
+          schema:
+            type: number
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VendorListResponse"
+
+  /vendors/trending:
+    get:
+      operationId: getTrendingVendors
+      tags: [vendors]
+      summary: Get trending vendors (top rated, most booked)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VendorListResponse"
+
+  /vendors/{id}:
+    get:
+      operationId: getVendor
+      tags: [vendors]
+      summary: Get vendor by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VendorDetailResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /vendors/me:
+    get:
+      operationId: getMyVendorProfile
+      tags: [vendors]
+      summary: Get the authenticated vendor's own profile
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VendorDetailResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateMyVendorProfile
+      tags: [vendors]
+      summary: Update the authenticated vendor's profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateVendorBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VendorDetailResponse"
+
+  /bookings:
+    post:
+      operationId: createBooking
+      tags: [bookings]
+      summary: Create a booking request (customer)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBookingBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingResponse"
+
+  /bookings/mine:
+    get:
+      operationId: getMyBookings
+      tags: [bookings]
+      summary: Get customer's own bookings
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingListResponse"
+
+  /bookings/requests:
+    get:
+      operationId: getBookingRequests
+      tags: [bookings]
+      summary: Get vendor's incoming booking requests
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingListResponse"
+
+  /bookings/{id}/respond:
+    put:
+      operationId: respondToBooking
+      tags: [bookings]
+      summary: Vendor accepts or declines a booking
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RespondBookingBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingResponse"
+
+  /reviews:
+    post:
+      operationId: createReview
+      tags: [reviews]
+      summary: Create a review after a confirmed booking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateReviewBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewResponse"
+
+  /reviews/vendor/{vendorId}:
+    get:
+      operationId: getVendorReviews
+      tags: [reviews]
+      summary: Get reviews for a vendor
+      parameters:
+        - name: vendorId
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewListResponse"
+
+  /saved:
+    get:
+      operationId: getSavedVendors
+      tags: [saved]
+      summary: Get customer's saved vendors
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SavedVendorsResponse"
+
+  /saved/{vendorId}:
+    post:
+      operationId: toggleSavedVendor
+      tags: [saved]
+      summary: Toggle save/unsave a vendor
+      parameters:
+        - name: vendorId
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ToggleSavedResponse"
+
+  /subscription/activate:
+    post:
+      operationId: activateSubscription
+      tags: [subscription]
+      summary: Activate vendor subscription (mock)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubscriptionResponse"
+
+  /vendor-stats:
+    get:
+      operationId: getVendorStats
+      tags: [vendors]
+      summary: Get vendor dashboard stats
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VendorStatsResponse"
+
+  /onboarding:
+    post:
+      operationId: completeOnboarding
+      tags: [vendors]
+      summary: Complete vendor onboarding (multi-step)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OnboardingBody"
+      responses:
+        "201":
+          description: Onboarding complete
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VendorDetailResponse"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required: [message]
+
+    SignupBody:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [customer, vendor]
+        cartName:
+          type: string
+        category:
+          type: string
+        city:
+          type: string
+      required: [email, password, name, role]
+
+    LoginBody:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required: [email, password]
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/UserProfile"
+        vendorProfile:
+          $ref: "#/components/schemas/VendorSummary"
+      required: [token, user]
+
+    MeResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/UserProfile"
+        vendorProfile:
+          $ref: "#/components/schemas/VendorSummary"
+      required: [user]
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: number
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [customer, vendor]
+        createdAt:
+          type: string
+      required: [id, email, name, role, createdAt]
+
+    VendorSummary:
+      type: object
+      properties:
+        id:
+          type: number
+        cartName:
+          type: string
+        category:
+          type: string
+        city:
+          type: string
+        coverPhoto:
+          type: string
+        startingPrice:
+          type: number
+        avgRating:
+          type: number
+        isActive:
+          type: boolean
+        subscriptionStatus:
+          type: string
+          enum: [active, inactive]
+        onboardingComplete:
+          type: boolean
+      required: [id, cartName, category, city, isActive, subscriptionStatus, onboardingComplete]
+
+    VendorDetail:
+      type: object
+      properties:
+        id:
+          type: number
+        userId:
+          type: number
+        cartName:
+          type: string
+        category:
+          type: string
+        bio:
+          type: string
+        city:
+          type: string
+        coverPhoto:
+          type: string
+        galleryPhotos:
+          type: array
+          items:
+            type: string
+        startingPrice:
+          type: number
+        packages:
+          type: array
+          items:
+            $ref: "#/components/schemas/PricingPackage"
+        isActive:
+          type: boolean
+        subscriptionStatus:
+          type: string
+          enum: [active, inactive]
+        avgRating:
+          type: number
+        profileViews:
+          type: number
+        totalReviews:
+          type: number
+        onboardingComplete:
+          type: boolean
+        isSaved:
+          type: boolean
+      required: [id, userId, cartName, category, city, isActive, subscriptionStatus, avgRating, profileViews, totalReviews, onboardingComplete]
+
+    PricingPackage:
+      type: object
+      properties:
+        name:
+          type: string
+        price:
+          type: number
+        description:
+          type: string
+      required: [name, price, description]
+
+    VendorListResponse:
+      type: object
+      properties:
+        vendors:
+          type: array
+          items:
+            $ref: "#/components/schemas/VendorSummary"
+        total:
+          type: number
+      required: [vendors, total]
+
+    VendorDetailResponse:
+      type: object
+      properties:
+        vendor:
+          $ref: "#/components/schemas/VendorDetail"
+      required: [vendor]
+
+    UpdateVendorBody:
+      type: object
+      properties:
+        cartName:
+          type: string
+        category:
+          type: string
+        bio:
+          type: string
+        city:
+          type: string
+        coverPhoto:
+          type: string
+        galleryPhotos:
+          type: array
+          items:
+            type: string
+        startingPrice:
+          type: number
+        packages:
+          type: array
+          items:
+            $ref: "#/components/schemas/PricingPackage"
+        isActive:
+          type: boolean
+
+    Booking:
+      type: object
+      properties:
+        id:
+          type: number
+        customerId:
+          type: number
+        vendorId:
+          type: number
+        eventDate:
+          type: string
+        eventType:
+          type: string
+        guestCount:
+          type: number
+        location:
+          type: string
+        message:
+          type: string
+        status:
+          type: string
+          enum: [pending, confirmed, declined]
+        vendorNote:
+          type: string
+        createdAt:
+          type: string
+        customerName:
+          type: string
+        vendorCartName:
+          type: string
+        hasReview:
+          type: boolean
+      required: [id, customerId, vendorId, eventDate, eventType, guestCount, location, status, createdAt]
+
+    CreateBookingBody:
+      type: object
+      properties:
+        vendorId:
+          type: number
+        eventDate:
+          type: string
+        eventType:
+          type: string
+        guestCount:
+          type: number
+        location:
+          type: string
+        message:
+          type: string
+      required: [vendorId, eventDate, eventType, guestCount, location]
+
+    RespondBookingBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [confirmed, declined]
+        vendorNote:
+          type: string
+      required: [status]
+
+    BookingResponse:
+      type: object
+      properties:
+        booking:
+          $ref: "#/components/schemas/Booking"
+      required: [booking]
+
+    BookingListResponse:
+      type: object
+      properties:
+        bookings:
+          type: array
+          items:
+            $ref: "#/components/schemas/Booking"
+      required: [bookings]
+
+    Review:
+      type: object
+      properties:
+        id:
+          type: number
+        bookingId:
+          type: number
+        customerId:
+          type: number
+        vendorId:
+          type: number
+        rating:
+          type: number
+        body:
+          type: string
+        createdAt:
+          type: string
+        customerName:
+          type: string
+      required: [id, bookingId, customerId, vendorId, rating, createdAt]
+
+    CreateReviewBody:
+      type: object
+      properties:
+        bookingId:
+          type: number
+        rating:
+          type: number
+        body:
+          type: string
+      required: [bookingId, rating]
+
+    ReviewResponse:
+      type: object
+      properties:
+        review:
+          $ref: "#/components/schemas/Review"
+      required: [review]
+
+    ReviewListResponse:
+      type: object
+      properties:
+        reviews:
+          type: array
+          items:
+            $ref: "#/components/schemas/Review"
+      required: [reviews]
+
+    SavedVendorsResponse:
+      type: object
+      properties:
+        vendors:
+          type: array
+          items:
+            $ref: "#/components/schemas/VendorSummary"
+      required: [vendors]
+
+    ToggleSavedResponse:
+      type: object
+      properties:
+        saved:
+          type: boolean
+      required: [saved]
+
+    SubscriptionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        subscriptionStatus:
+          type: string
+          enum: [active, inactive]
+      required: [success, subscriptionStatus]
+
+    VendorStatsResponse:
+      type: object
+      properties:
+        totalBookings:
+          type: number
+        pendingRequests:
+          type: number
+        profileViews:
+          type: number
+        avgRating:
+          type: number
+        confirmedBookings:
+          type: number
+        declinedBookings:
+          type: number
+      required: [totalBookings, pendingRequests, profileViews, avgRating, confirmedBookings, declinedBookings]
+
+    OnboardingBody:
+      type: object
+      properties:
+        cartName:
+          type: string
+        category:
+          type: string
+        bio:
+          type: string
+        city:
+          type: string
+        coverPhoto:
+          type: string
+        galleryPhotos:
+          type: array
+          items:
+            type: string
+        startingPrice:
+          type: number
+        packages:
+          type: array
+          items:
+            $ref: "#/components/schemas/PricingPackage"
+        activateSubscription:
+          type: boolean
+      required: [cartName, category, bio, city, startingPrice]
+
