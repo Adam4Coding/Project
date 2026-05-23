@@ -14,4 +14,4 @@ ENV PORT=3000
 
 EXPOSE 3000
 
-CMD ["pnpm", "start:app"]
+CMD ["sh", "-c", "pnpm --filter @workspace/db run push && pnpm run start:app"]

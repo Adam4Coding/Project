@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: vended-web
+    env: docker
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /api/healthz
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: BASE_PATH
+        value: /
+      - key: LOG_LEVEL
+        value: info
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false
