@@ -102,21 +102,20 @@ After DNS propagates, the app is fully detached from Replit.
 
 ## 7) Render (Simplest Deployment Path)
 
-This repo includes `render.yaml` so Render can create the web service and a managed Postgres database from one Blueprint.
+This repo includes `render.yaml` so Render can create the web service from one Blueprint. Use an external Postgres database URL for `DATABASE_URL`.
 
 ### Free preview URL flow (no domain purchase required)
 
 1. Push this branch to GitHub.
 2. In Render, choose **New +** -> **Blueprint**.
 3. Connect this GitHub repo and select the branch you want to deploy.
-4. Render reads `render.yaml` and prepares:
-   - Web service: `vended-web`
-   - Postgres database: `vended-db`
-5. Provide the one required env var marked `sync: false`:
+4. Render reads `render.yaml` and prepares the `vended-web` web service.
+5. Provide the required env vars marked `sync: false`:
+   - `DATABASE_URL=postgres://...`
    - `CORS_ORIGIN=https://<your-service-name>.onrender.com`
 6. Click **Apply**.
 
-Render injects `DATABASE_URL` from the managed Postgres database automatically and generates `SESSION_SECRET` automatically.
+Render generates `SESSION_SECRET` automatically.
 
 After deploy succeeds, Render provides a free generated URL:
 
