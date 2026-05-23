@@ -1,0 +1,15 @@
+{
+  "buildCommand": "corepack enable && pnpm install --frozen-lockfile && pnpm run build:app",
+  "installCommand": "corepack enable && pnpm install --frozen-lockfile",
+  "outputDirectory": "artifacts/cartly/dist/public",
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
