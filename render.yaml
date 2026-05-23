@@ -1,9 +1,9 @@
 services:
   - type: web
     name: vended-web
-    env: docker
+    runtime: docker
     plan: free
-    autoDeploy: true
+    autoDeployTrigger: commit
     healthCheckPath: /api/healthz
     dockerfilePath: ./Dockerfile
     envVars:
@@ -16,6 +16,15 @@ services:
       - key: SESSION_SECRET
         generateValue: true
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: vended-db
+          property: connectionString
       - key: CORS_ORIGIN
         sync: false
+
+databases:
+  - name: vended-db
+    plan: free
+    databaseName: vended
+    user: vended_user
+    ipAllowList: []
