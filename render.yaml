@@ -16,15 +16,6 @@ services:
       - key: SESSION_SECRET
         generateValue: true
       - key: DATABASE_URL
-        fromDatabase:
-          name: vended-db
-          property: connectionString
+        sync: false
       - key: CORS_ORIGIN
         sync: false
-
-databases:
-  - name: vended-db
-    plan: free
-    databaseName: vended
-    user: vended_user
-    ipAllowList: []
