@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,11 +23,12 @@ import {
   getGetVendorStatsQueryKey,
   getGetMyVendorProfileQueryKey
 } from "@workspace/api-client-react";
-import { Star, Calendar, Users, Eye, TrendingUp, Check, X as XIcon, Settings, Image as ImageIcon } from "lucide-react";
+import { Star, Calendar, Users, Eye, TrendingUp, Check, X as XIcon, Settings, Image as ImageIcon, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { getApiErrorMessage } from "@/lib/utils";
 
 const profileSchema = z.object({
   cartName: z.string().min(2, "Name is required"),
@@ -75,15 +77,15 @@ export default function VendorDashboard() {
   const [declineReason, setDeclineReason] = useState("");
 
   const { data: statsData, isLoading: isLoadingStats } = useGetVendorStats(
-    { query: { enabled: isAuthenticated && user?.role === "vendor" } }
+    { query: { enabled: isAuthenticated && user?.role === "vendor", queryKey: getGetVendorStatsQueryKey() } }
   );
   
   const { data: bookingsData, isLoading: isLoadingBookings } = useGetBookingRequests(
-    { query: { enabled: isAuthenticated && user?.role === "vendor" } }
+    { query: { enabled: isAuthenticated && user?.role === "vendor", queryKey: getGetBookingRequestsQueryKey() } }
   );
 
   const { data: profileData, isLoading: isLoadingProfile } = useGetMyVendorProfile(
-    { query: { enabled: isAuthenticated && user?.role === "vendor" } }
+    { query: { enabled: isAuthenticated && user?.role === "vendor", queryKey: getGetMyVendorProfileQueryKey() } }
   );
 
   const respondToBooking = useRespondToBooking();
@@ -136,7 +138,7 @@ export default function VendorDashboard() {
           queryClient.invalidateQueries({ queryKey: getGetVendorStatsQueryKey() });
         },
         onError: (err) => {
-          toast.error(err.data?.message || "Failed to update booking");
+          toast.error(getApiErrorMessage(err, "Failed to update booking"));
         }
       }
     );
@@ -151,7 +153,7 @@ export default function VendorDashboard() {
           queryClient.invalidateQueries({ queryKey: getGetMyVendorProfileQueryKey() });
         },
         onError: (err) => {
-          toast.error(err.data?.message || "Failed to update profile");
+          toast.error(getApiErrorMessage(err, "Failed to update profile"));
         }
       }
     );
@@ -487,4 +489,3 @@ export default function VendorDashboard() {
     </PageTransition>
   );
 }
-

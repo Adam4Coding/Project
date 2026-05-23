@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { setAuthTokenGetter } from "@workspace/api-client-react";
-import type { UserProfile, VendorSummary } from "@workspace/api-client-react/src/generated/api.schemas";
+import type { UserProfile, VendorSummary } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
 
 interface AuthState {
@@ -91,4 +91,3 @@ export function useAuth() {
   }
   return context;
 }
-

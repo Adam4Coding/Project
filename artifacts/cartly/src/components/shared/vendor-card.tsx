@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { VendorSummary } from "@workspace/api-client-react/src/generated/api.schemas";
+import type { VendorSummary } from "@workspace/api-client-react";
 import { Badge } from "@/components/ui/badge";
 import { Heart, MapPin, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -118,4 +118,3 @@ export function VendorCardSkeleton() {
     </div>
   );
 }
-

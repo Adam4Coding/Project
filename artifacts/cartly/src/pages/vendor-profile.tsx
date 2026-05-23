@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { useRoute, useLocation } from "wouter";
+import { Link, useRoute, useLocation } from "wouter";
 import { PageTransition } from "@/components/shared/page-transition";
 import { Button } from "@/components/ui/button";
-import { useGetVendor, useGetVendorReviews, useToggleSavedVendor, useCreateBooking, getGetVendorQueryKey } from "@workspace/api-client-react";
+import { useGetVendor, useGetVendorReviews, useToggleSavedVendor, useCreateBooking, getGetVendorQueryKey, getGetVendorReviewsQueryKey } from "@workspace/api-client-react";
 import { Star, MapPin, Heart, Share, ShieldCheck, ChevronRight, Calendar, Users, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
@@ -15,6 +15,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
+import { getApiErrorMessage } from "@/lib/utils";
 
 const bookingSchema = z.object({
   eventDate: z.string().min(1, "Please select an event date"),
@@ -39,7 +40,7 @@ export default function VendorProfile() {
   
   const { data: reviewsData } = useGetVendorReviews(
     vendorId,
-    { query: { enabled: !!vendorId } }
+    { query: { enabled: !!vendorId, queryKey: getGetVendorReviewsQueryKey(vendorId) } }
   );
   
   const toggleSaved = useToggleSavedVendor();
@@ -94,7 +95,7 @@ export default function VendorProfile() {
           form.reset();
         },
         onError: (err) => {
-          toast.error(err.data?.message || "Failed to send booking request");
+          toast.error(getApiErrorMessage(err, "Failed to send booking request"));
         }
       }
     );
@@ -389,4 +390,3 @@ export default function VendorProfile() {
     </PageTransition>
   );
 }
-

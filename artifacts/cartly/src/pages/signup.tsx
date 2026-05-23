@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
 import { Loader2, Store, UserRound } from "lucide-react";
+import { getApiErrorMessage } from "@/lib/utils";
 
 const signupSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -82,7 +83,7 @@ export default function Signup() {
           }
         },
         onError: (err) => {
-          toast.error(err.data?.message || "Failed to create account. Please try again.");
+          toast.error(getApiErrorMessage(err, "Failed to create account. Please try again."));
         }
       }
     );
@@ -249,4 +250,3 @@ export default function Signup() {
     </PageTransition>
   );
 }
-

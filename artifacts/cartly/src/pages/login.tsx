@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { getApiErrorMessage } from "@/lib/utils";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -52,7 +53,7 @@ export default function Login() {
           }
         },
         onError: (err) => {
-          toast.error(err.data?.message || "Failed to log in. Please check your credentials.");
+          toast.error(getApiErrorMessage(err, "Failed to log in. Please check your credentials."));
         }
       }
     );
@@ -122,4 +123,3 @@ export default function Login() {
     </PageTransition>
   );
 }
-

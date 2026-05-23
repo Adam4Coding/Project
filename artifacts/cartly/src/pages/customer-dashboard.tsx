@@ -8,10 +8,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { useGetMyBookings, useGetSavedVendors, useCreateReview, getGetMyBookingsQueryKey } from "@workspace/api-client-react";
+import { useGetMyBookings, useGetSavedVendors, useCreateReview, getGetMyBookingsQueryKey, getGetSavedVendorsQueryKey } from "@workspace/api-client-react";
 import { Star, Calendar, MapPin, Users, HeartCrack, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { getApiErrorMessage } from "@/lib/utils";
 
 export default function CustomerDashboard() {
   const [, setLocation] = useLocation();
@@ -23,11 +24,11 @@ export default function CustomerDashboard() {
   const [reviewBody, setReviewBody] = useState("");
 
   const { data: bookingsData, isLoading: isLoadingBookings } = useGetMyBookings(
-    { query: { enabled: isAuthenticated && user?.role === "customer" } }
+    { query: { enabled: isAuthenticated && user?.role === "customer", queryKey: getGetMyBookingsQueryKey() } }
   );
   
   const { data: savedData, isLoading: isLoadingSaved } = useGetSavedVendors(
-    { query: { enabled: isAuthenticated && user?.role === "customer" } }
+    { query: { enabled: isAuthenticated && user?.role === "customer", queryKey: getGetSavedVendorsQueryKey() } }
   );
 
   const createReview = useCreateReview();
@@ -51,7 +52,7 @@ export default function CustomerDashboard() {
           queryClient.invalidateQueries({ queryKey: getGetMyBookingsQueryKey() });
         },
         onError: (err) => {
-          toast.error(err.data?.message || "Failed to submit review");
+          toast.error(getApiErrorMessage(err, "Failed to submit review"));
         }
       }
     );
@@ -222,4 +223,3 @@ export default function CustomerDashboard() {
     </PageTransition>
   );
 }
-

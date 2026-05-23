@@ -10,6 +10,7 @@ import { useCompleteOnboarding } from "@workspace/api-client-react";
 import { Store, Camera, DollarSign, Rocket, CheckCircle2, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { getApiErrorMessage } from "@/lib/utils";
 
 export default function Onboarding() {
   const [, setLocation] = useLocation();
@@ -87,7 +88,7 @@ export default function Onboarding() {
           }, 3000);
         },
         onError: (err) => {
-          toast.error(err.data?.message || "Failed to complete setup");
+          toast.error(getApiErrorMessage(err, "Failed to complete setup"));
         }
       }
     );
@@ -425,4 +426,3 @@ export default function Onboarding() {
     </PageTransition>
   );
 }
-
