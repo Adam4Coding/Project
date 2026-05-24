@@ -73,6 +73,13 @@ export interface VendorSummary {
   subscriptionStatus: VendorSummarySubscriptionStatus;
   trialStartedAt?: string;
   trialEndsAt?: string;
+  socialPromoStatus?: string;
+  socialPromoPlatform?: string;
+  socialPromoHandle?: string;
+  socialPromoProofUrl?: string;
+  socialPromoSubmittedAt?: string;
+  socialPromoApprovedAt?: string;
+  bonusTrialEndsAt?: string;
   onboardingComplete: boolean;
 }
 
@@ -117,6 +124,13 @@ export interface VendorDetail {
   subscriptionStatus: VendorDetailSubscriptionStatus;
   trialStartedAt?: string;
   trialEndsAt?: string;
+  socialPromoStatus?: string;
+  socialPromoPlatform?: string;
+  socialPromoHandle?: string;
+  socialPromoProofUrl?: string;
+  socialPromoSubmittedAt?: string;
+  socialPromoApprovedAt?: string;
+  bonusTrialEndsAt?: string;
   avgRating: number;
   profileViews: number;
   totalReviews: number;

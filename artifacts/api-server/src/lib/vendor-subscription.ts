@@ -46,5 +46,12 @@ export function formatVendorSubscriptionFields(vp: VendorProfileRecord) {
     subscriptionStatus: vp.subscriptionStatus as VendorSubscriptionStatus,
     trialStartedAt: vp.trialStartedAt?.toISOString(),
     trialEndsAt: vp.trialEndsAt?.toISOString(),
+    socialPromoStatus: vp.socialPromoStatus,
+    socialPromoPlatform: vp.socialPromoPlatform,
+    socialPromoHandle: vp.socialPromoHandle,
+    socialPromoProofUrl: vp.socialPromoProofUrl,
+    socialPromoSubmittedAt: vp.socialPromoSubmittedAt?.toISOString(),
+    socialPromoApprovedAt: vp.socialPromoApprovedAt?.toISOString(),
+    bonusTrialEndsAt: vp.bonusTrialEndsAt?.toISOString(),
   };
 }

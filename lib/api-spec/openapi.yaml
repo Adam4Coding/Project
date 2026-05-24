@@ -517,6 +517,20 @@ components:
           type: string
         trialEndsAt:
           type: string
+        socialPromoStatus:
+          type: string
+        socialPromoPlatform:
+          type: string
+        socialPromoHandle:
+          type: string
+        socialPromoProofUrl:
+          type: string
+        socialPromoSubmittedAt:
+          type: string
+        socialPromoApprovedAt:
+          type: string
+        bonusTrialEndsAt:
+          type: string
         onboardingComplete:
           type: boolean
       required: [id, cartName, category, city, isActive, subscriptionStatus, onboardingComplete]
@@ -556,6 +570,20 @@ components:
         trialStartedAt:
           type: string
         trialEndsAt:
+          type: string
+        socialPromoStatus:
+          type: string
+        socialPromoPlatform:
+          type: string
+        socialPromoHandle:
+          type: string
+        socialPromoProofUrl:
+          type: string
+        socialPromoSubmittedAt:
+          type: string
+        socialPromoApprovedAt:
+          type: string
+        bonusTrialEndsAt:
           type: string
         avgRating:
           type: number
@@ -772,6 +800,20 @@ components:
           type: string
           enum: [active, trialing, inactive]
         trialEndsAt:
+          type: string
+        socialPromoStatus:
+          type: string
+        socialPromoPlatform:
+          type: string
+        socialPromoHandle:
+          type: string
+        socialPromoProofUrl:
+          type: string
+        socialPromoSubmittedAt:
+          type: string
+        socialPromoApprovedAt:
+          type: string
+        bonusTrialEndsAt:
           type: string
       required: [success, subscriptionStatus]
 

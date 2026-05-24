@@ -311,4 +311,52 @@ router.post("/subscription/activate", requireVendorAuth, async (req, res): Promi
   res.json({ success: true, subscriptionStatus: "trialing", trialEndsAt: vp.trialEndsAt?.toISOString() });
 });
 
+router.post("/subscription/social-promo", requireVendorAuth, async (req, res): Promise<void> => {
+  const authReq = req as AuthenticatedRequest;
+  const { platform, handle, proofUrl } = req.body as {
+    platform?: unknown;
+    handle?: unknown;
+    proofUrl?: unknown;
+  };
+
+  const cleanPlatform = typeof platform === "string" ? platform.trim().slice(0, 80) : "";
+  const cleanHandle = typeof handle === "string" ? handle.trim().slice(0, 120) : "";
+  const cleanProofUrl = typeof proofUrl === "string" ? proofUrl.trim().slice(0, 500) : "";
+
+  if (!cleanPlatform || !cleanHandle || !cleanProofUrl) {
+    res.status(400).json({ message: "Platform, handle, and proof link are required." });
+    return;
+  }
+
+  const [existing] = await db
+    .select()
+    .from(vendorProfilesTable)
+    .where(eq(vendorProfilesTable.userId, authReq.user!.userId))
+    .limit(1);
+
+  if (!existing) {
+    res.status(404).json({ message: "Vendor profile not found" });
+    return;
+  }
+
+  if (existing.socialPromoStatus === "approved") {
+    res.status(400).json({ message: "Your bonus month has already been approved." });
+    return;
+  }
+
+  const [vp] = await db
+    .update(vendorProfilesTable)
+    .set({
+      socialPromoStatus: "pending",
+      socialPromoPlatform: cleanPlatform,
+      socialPromoHandle: cleanHandle,
+      socialPromoProofUrl: cleanProofUrl,
+      socialPromoSubmittedAt: new Date(),
+    })
+    .where(eq(vendorProfilesTable.userId, authReq.user!.userId))
+    .returning();
+
+  res.json({ vendor: parseVendorProfile(vp) });
+});
+
 export default router;

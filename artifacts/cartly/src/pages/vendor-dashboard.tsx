@@ -75,11 +75,15 @@ function formatTrialEnd(date?: string) {
 
 export default function VendorDashboard() {
   const [, setLocation] = useLocation();
-  const { isAuthenticated, user, vendorProfile } = useAuth();
+  const { isAuthenticated, user, vendorProfile, token } = useAuth();
   const queryClient = useQueryClient();
   
   const [declineBookingId, setDeclineBookingId] = useState<number | null>(null);
   const [declineReason, setDeclineReason] = useState("");
+  const [promoPlatform, setPromoPlatform] = useState("Instagram");
+  const [promoHandle, setPromoHandle] = useState("");
+  const [promoProofUrl, setPromoProofUrl] = useState("");
+  const [isSubmittingPromo, setIsSubmittingPromo] = useState(false);
 
   const { data: statsData, isLoading: isLoadingStats } = useGetVendorStats(
     { query: { enabled: isAuthenticated && user?.role === "vendor", queryKey: getGetVendorStatsQueryKey() } }
@@ -176,12 +180,51 @@ export default function VendorDashboard() {
     );
   };
 
+  const handleSubmitSocialPromo = async () => {
+    if (!promoPlatform.trim() || !promoHandle.trim() || !promoProofUrl.trim()) {
+      toast.error("Add your platform, handle, and proof link.");
+      return;
+    }
+
+    setIsSubmittingPromo(true);
+    try {
+      const response = await fetch("/api/subscription/social-promo", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          platform: promoPlatform,
+          handle: promoHandle,
+          proofUrl: promoProofUrl,
+        }),
+      });
+
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(data?.message || "Could not submit your promo request");
+      }
+
+      toast.success("Promo proof submitted. We will review it for your bonus month.");
+      setPromoProofUrl("");
+      queryClient.invalidateQueries({ queryKey: getGetMyVendorProfileQueryKey() });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not submit your promo request");
+    } finally {
+      setIsSubmittingPromo(false);
+    }
+  };
+
   const subscriptionStatus = profileData?.vendor?.subscriptionStatus;
   const isProfileUnavailable = profileData?.vendor?.isActive === false;
   const isFreeProfile = subscriptionStatus === "inactive";
   const isTrialing = subscriptionStatus === "trialing";
   const isPlanActive = subscriptionStatus === "active";
   const trialEndsAt = profileData?.vendor?.trialEndsAt;
+  const promoStatus = (profileData?.vendor as { socialPromoStatus?: string } | undefined)?.socialPromoStatus ?? "none";
+  const promoSubmittedAt = (profileData?.vendor as { socialPromoSubmittedAt?: string } | undefined)?.socialPromoSubmittedAt;
+  const bonusTrialEndsAt = (profileData?.vendor as { bonusTrialEndsAt?: string } | undefined)?.bonusTrialEndsAt;
 
   return (
     <PageTransition className="flex-1 bg-muted/20 py-8">
@@ -500,6 +543,60 @@ export default function VendorDashboard() {
                   <Button variant="outline" className="w-full" disabled>
                     {isTrialing ? "Your free month is on" : "You are on Vended Pro"}
                   </Button>
+                )}
+              </div>
+
+              <div className="bg-card rounded-2xl border border-border p-8 cartly-shadow">
+                <div className="flex justify-between items-start gap-4 mb-6">
+                  <div>
+                    <h2 className="font-serif font-bold text-2xl mb-2">Bonus Month</h2>
+                    <p className="text-muted-foreground">Share Vended to your story, tag us, and submit proof for one extra free month.</p>
+                  </div>
+                  <Badge className={promoStatus === "approved" ? "bg-emerald-500/10 text-emerald-600 border-none" : promoStatus === "pending" ? "bg-amber-500/10 text-amber-600 border-none" : "bg-slate-500/10 text-slate-600 border-none"}>
+                    {promoStatus === "approved" ? "Approved" : promoStatus === "pending" ? "Under review" : "Available"}
+                  </Badge>
+                </div>
+
+                <ul className="space-y-3 mb-6 text-sm">
+                  <li className="flex items-center gap-3"><Check className="w-5 h-5 text-primary" /> Tag Vended in your story or post</li>
+                  <li className="flex items-center gap-3"><Check className="w-5 h-5 text-primary" /> Keep it live for at least 24 hours</li>
+                  <li className="flex items-center gap-3"><Check className="w-5 h-5 text-primary" /> One bonus month per vendor</li>
+                </ul>
+
+                {promoStatus === "approved" ? (
+                  <Alert className="bg-emerald-50 border-emerald-200 text-emerald-900">
+                    <AlertTitle>Bonus month approved</AlertTitle>
+                    <AlertDescription>
+                      {bonusTrialEndsAt ? `Your extended free period runs through ${formatTrialEnd(bonusTrialEndsAt)}.` : "Your bonus month has been added."}
+                    </AlertDescription>
+                  </Alert>
+                ) : promoStatus === "pending" ? (
+                  <Alert className="bg-amber-50 border-amber-200 text-amber-900">
+                    <AlertTitle>We have your proof</AlertTitle>
+                    <AlertDescription>
+                      {promoSubmittedAt ? `Submitted ${formatTrialEnd(promoSubmittedAt)}. ` : ""}We will review it before adding the extra month.
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="promoPlatform">Platform</Label>
+                        <Input id="promoPlatform" value={promoPlatform} onChange={(e) => setPromoPlatform(e.target.value)} placeholder="Instagram" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="promoHandle">Your handle</Label>
+                        <Input id="promoHandle" value={promoHandle} onChange={(e) => setPromoHandle(e.target.value)} placeholder="@yourcart" />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="promoProofUrl">Proof link or screenshot URL</Label>
+                      <Input id="promoProofUrl" value={promoProofUrl} onChange={(e) => setPromoProofUrl(e.target.value)} placeholder="Paste the story link or uploaded screenshot link" />
+                    </div>
+                    <Button onClick={handleSubmitSocialPromo} disabled={isSubmittingPromo} className="w-full h-12 bg-primary hover:bg-primary/90">
+                      {isSubmittingPromo ? "Submitting..." : "Submit for bonus month"}
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>
