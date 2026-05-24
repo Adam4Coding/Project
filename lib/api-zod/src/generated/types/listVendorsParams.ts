@@ -16,4 +16,3 @@ export type ListVendorsParams = {
   limit?: number;
   offset?: number;
 };
-

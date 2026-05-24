@@ -9,4 +9,3 @@
 export interface ToggleSavedResponse {
   saved: boolean;
 }
-

@@ -68,6 +68,11 @@ function AnimatedCounter({ value }: { value: number }) {
   return <>{count}</>;
 }
 
+function formatTrialEnd(date?: string) {
+  if (!date) return "30 days";
+  return new Date(date).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
 export default function VendorDashboard() {
   const [, setLocation] = useLocation();
   const { isAuthenticated, user, vendorProfile } = useAuth();
@@ -164,28 +169,33 @@ export default function VendorDashboard() {
       undefined as any,
       {
         onSuccess: () => {
-          toast.success("Subscription activated! Your cart is now live.");
+          toast.success("Your free month has started. Customers can now find your cart.");
           queryClient.invalidateQueries({ queryKey: getGetMyVendorProfileQueryKey() });
         }
       }
     );
   };
 
-  const isInactive = profileData?.vendor?.subscriptionStatus === "inactive";
+  const subscriptionStatus = profileData?.vendor?.subscriptionStatus;
+  const isProfileUnavailable = profileData?.vendor?.isActive === false;
+  const isFreeProfile = subscriptionStatus === "inactive";
+  const isTrialing = subscriptionStatus === "trialing";
+  const isPlanActive = subscriptionStatus === "active";
+  const trialEndsAt = profileData?.vendor?.trialEndsAt;
 
   return (
     <PageTransition className="flex-1 bg-muted/20 py-8">
       <div className="container mx-auto px-4 max-w-6xl">
         
-        {isInactive && (
+        {isProfileUnavailable && (
           <Alert className="mb-8 bg-amber-50 border-amber-200 text-amber-900 shadow-sm">
             <AlertTitle className="font-serif font-bold text-lg flex items-center gap-2">
-              ⚠️ Your cart is currently hidden
+              Your cart is not showing to customers yet
             </AlertTitle>
             <AlertDescription className="mt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <span>Your subscription is inactive. Your profile won't appear in the Explore page until you renew.</span>
+              <span>Start your free month to show your cart in Explore and start receiving booking requests.</span>
               <Button size="sm" onClick={handleActivateSub} disabled={activateSubscription.isPending} className="bg-amber-600 hover:bg-amber-700 text-white shrink-0">
-                {activateSubscription.isPending ? "Processing..." : "Renew Plan ($59/mo)"}
+                {activateSubscription.isPending ? "Starting..." : "Start my free month"}
               </Button>
             </AlertDescription>
           </Alert>
@@ -193,8 +203,8 @@ export default function VendorDashboard() {
 
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl md:text-4xl font-serif font-bold text-foreground mb-2">Vendor Dashboard</h1>
-            <p className="text-muted-foreground text-lg">Manage your business, bookings, and profile.</p>
+            <h1 className="text-3xl md:text-4xl font-serif font-bold text-foreground mb-2">Your Cart Dashboard</h1>
+            <p className="text-muted-foreground text-lg">See new booking requests, update your profile, and manage Vended Pro.</p>
           </div>
           <Button variant="outline" className="gap-2" onClick={() => setLocation(`/vendor/${profileData?.vendor?.id}`)}>
             <Eye className="w-4 h-4" /> View Public Profile
@@ -247,10 +257,10 @@ export default function VendorDashboard() {
               Booking Requests
             </TabsTrigger>
             <TabsTrigger value="profile" className="rounded-lg px-6 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-medium">
-              Profile Editor
+              Your Profile
             </TabsTrigger>
             <TabsTrigger value="subscription" className="rounded-lg px-6 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-medium">
-              Subscription
+              Vended Pro
             </TabsTrigger>
           </TabsList>
 
@@ -351,7 +361,7 @@ export default function VendorDashboard() {
                   </div>
                   <h3 className="font-serif font-bold text-xl mb-2">No booking requests yet</h3>
                   <p className="text-muted-foreground max-w-md mx-auto">
-                    When customers request to book your cart, they'll appear here. Make sure your profile is complete and active!
+                    When customers ask to book your cart, their requests will appear here. A complete profile helps customers feel ready to reach out.
                   </p>
                 </div>
               )}
@@ -360,7 +370,7 @@ export default function VendorDashboard() {
 
           <TabsContent value="profile">
             <div className="bg-card rounded-2xl border border-border p-6 md:p-8 cartly-shadow">
-              <h2 className="font-serif font-bold text-2xl mb-6">Edit Profile</h2>
+              <h2 className="font-serif font-bold text-2xl mb-6">Update Your Profile</h2>
               
               {isLoadingProfile ? (
                 <div className="animate-pulse space-y-4">
@@ -456,14 +466,24 @@ export default function VendorDashboard() {
                 <div className="flex justify-between items-start mb-6">
                   <div>
                     <h2 className="font-serif font-bold text-2xl mb-2">Vended Pro</h2>
-                    <p className="text-muted-foreground">Everything you need to grow your cart business.</p>
+                    <p className="text-muted-foreground">Vended Pro — first month free, then $29/month. Cancel anytime.</p>
                   </div>
-                  <Badge className={isInactive ? "bg-amber-500/10 text-amber-600 border-none" : "bg-emerald-500/10 text-emerald-600 border-none"}>
-                    {isInactive ? "Inactive" : "Active"}
+                  <Badge className={isFreeProfile ? "bg-slate-500/10 text-slate-600 border-none" : "bg-emerald-500/10 text-emerald-600 border-none"}>
+                    {isFreeProfile ? "Free profile" : isTrialing ? "Free month" : "Pro is on"}
                   </Badge>
                 </div>
                 
-                <div className="text-4xl font-serif font-bold mb-6">$59<span className="text-lg text-muted-foreground font-sans font-normal">/mo</span></div>
+                <div className="mb-6">
+                  <div className="text-4xl font-serif font-bold">
+                    {isPlanActive ? "$29" : "$0"} <span className="text-lg text-muted-foreground font-sans font-normal">{isPlanActive ? "/month" : "today"}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {isPlanActive ? "You are on Vended Pro." : "Vended Pro — first month free, then $29/month. Cancel anytime."}
+                  </p>
+                  {isTrialing && (
+                    <p className="text-sm font-medium text-primary mt-2">Your free month ends on {formatTrialEnd(trialEndsAt)}.</p>
+                  )}
+                </div>
                 
                 <ul className="space-y-3 mb-8">
                   <li className="flex items-center gap-3"><Check className="w-5 h-5 text-primary" /> Listing on Explore page</li>
@@ -472,13 +492,13 @@ export default function VendorDashboard() {
                   <li className="flex items-center gap-3"><Check className="w-5 h-5 text-primary" /> Vendor dashboard analytics</li>
                 </ul>
                 
-                {isInactive ? (
+                {isFreeProfile ? (
                   <Button onClick={handleActivateSub} disabled={activateSubscription.isPending} className="w-full h-12 text-lg bg-primary hover:bg-primary/90">
-                    {activateSubscription.isPending ? "Activating..." : "Activate & Go Live"}
+                    {activateSubscription.isPending ? "Starting..." : "Start my free month"}
                   </Button>
                 ) : (
-                  <Button variant="outline" className="w-full text-destructive hover:bg-destructive/10 hover:text-destructive">
-                    Cancel Subscription
+                  <Button variant="outline" className="w-full" disabled>
+                    {isTrialing ? "Your free month is on" : "You are on Vended Pro"}
                   </Button>
                 )}
               </div>

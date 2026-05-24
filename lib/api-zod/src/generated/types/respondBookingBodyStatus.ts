@@ -13,4 +13,3 @@ export const RespondBookingBodyStatus = {
   confirmed: "confirmed",
   declined: "declined",
 } as const;
-

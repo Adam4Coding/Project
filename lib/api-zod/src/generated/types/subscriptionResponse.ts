@@ -10,5 +10,5 @@ import type { SubscriptionResponseSubscriptionStatus } from "./subscriptionRespo
 export interface SubscriptionResponse {
   success: boolean;
   subscriptionStatus: SubscriptionResponseSubscriptionStatus;
+  trialEndsAt?: string;
 }
-

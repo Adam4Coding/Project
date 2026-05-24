@@ -10,4 +10,3 @@ import type { VendorSummary } from "./vendorSummary";
 export interface SavedVendorsResponse {
   vendors: VendorSummary[];
 }
-

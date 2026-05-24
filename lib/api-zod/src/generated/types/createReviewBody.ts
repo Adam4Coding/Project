@@ -11,4 +11,3 @@ export interface CreateReviewBody {
   rating: number;
   body?: string;
 }
-

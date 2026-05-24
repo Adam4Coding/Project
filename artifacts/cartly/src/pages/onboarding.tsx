@@ -70,7 +70,7 @@ export default function Onboarding() {
           startingPrice: Number(formData.startingPrice),
           packages: formData.packages.map(p => ({ ...p, price: Number(p.price) })),
           coverPhoto: formData.coverPhoto,
-          activateSubscription: true
+          startFreeTrial: true
         } 
       },
       {
@@ -149,8 +149,8 @@ export default function Onboarding() {
           <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle2 className="w-12 h-12 text-primary" />
           </div>
-          <h1 className="text-4xl font-serif font-bold mb-4">You're Live!</h1>
-          <p className="text-xl text-muted-foreground mb-8">Your cart profile is beautifully set up and ready to receive bookings.</p>
+          <h1 className="text-4xl font-serif font-bold mb-4">You're All Set!</h1>
+          <p className="text-xl text-muted-foreground mb-8">Your free month has started, and customers can now find your cart.</p>
           <p className="text-sm text-muted-foreground animate-pulse">Redirecting to your dashboard...</p>
         </div>
       </PageTransition>
@@ -370,17 +370,19 @@ export default function Onboarding() {
                 <div className="w-20 h-20 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-6">
                   <Rocket className="w-10 h-10 text-secondary" />
                 </div>
-                <h2 className="text-3xl font-serif font-bold mb-4">Ready to launch?</h2>
+                <h2 className="text-3xl font-serif font-bold mb-4">Ready to show your cart?</h2>
                 <p className="text-muted-foreground text-lg max-w-md mx-auto mb-8">
-                  Your profile looks amazing. Activate your Vended Pro subscription to go live and start accepting bookings.
+                  Your profile looks great. Start your free month of Vended Pro and begin receiving booking requests.
                 </p>
                 
                 <div className="bg-card border-2 border-primary rounded-3xl p-8 max-w-sm mx-auto cartly-shadow relative overflow-hidden">
-                  <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-bl-xl">POPULAR</div>
+                  <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-bl-xl">FIRST MONTH FREE</div>
                   <h3 className="font-serif font-bold text-2xl mb-2">Vended Pro</h3>
-                  <div className="text-4xl font-serif font-bold mb-6">$59<span className="text-lg text-muted-foreground font-sans font-normal">/mo</span></div>
+                  <div className="text-4xl font-serif font-bold mb-2">$0<span className="text-lg text-muted-foreground font-sans font-normal"> today</span></div>
+                  <p className="text-sm text-muted-foreground mb-6">Vended Pro — first month free, then $29/month. Cancel anytime.</p>
                   
                   <ul className="text-left space-y-3 mb-8">
+                    <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-primary" /> No charge for 30 days</li>
                     <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-primary" /> Listing on Explore page</li>
                     <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-primary" /> Unlimited bookings</li>
                     <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-primary" /> Custom gallery</li>
@@ -413,9 +415,9 @@ export default function Onboarding() {
                 className="bg-secondary hover:bg-secondary/90 text-secondary-foreground px-8 rounded-xl h-12 text-lg shadow-md"
               >
                 {completeOnboarding.isPending ? (
-                  <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Processing...</>
+                  <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Starting free month...</>
                 ) : (
-                  "Activate & Launch"
+                  "Start my free month"
                 )}
               </Button>
             )}

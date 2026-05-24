@@ -1672,4 +1672,3 @@ export const useCompleteOnboarding = <
 > => {
   return useMutation(getCompleteOnboardingMutationOptions(options));
 };
-

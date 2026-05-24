@@ -13,4 +13,3 @@ export interface AuthResponse {
   user: UserProfile;
   vendorProfile?: VendorSummary;
 }
-

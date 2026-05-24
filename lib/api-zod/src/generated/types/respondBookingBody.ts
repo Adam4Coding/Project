@@ -11,4 +11,3 @@ export interface RespondBookingBody {
   status: RespondBookingBodyStatus;
   vendorNote?: string;
 }
-

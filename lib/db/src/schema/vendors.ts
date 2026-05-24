@@ -15,6 +15,8 @@ export const vendorProfilesTable = pgTable("vendor_profiles", {
   packages: text("packages").notNull().default("[]"),
   isActive: boolean("is_active").notNull().default(false),
   subscriptionStatus: text("subscription_status").notNull().default("inactive"),
+  trialStartedAt: timestamp("trial_started_at", { withTimezone: true }),
+  trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }),
   avgRating: real("avg_rating").notNull().default(0),
   profileViews: integer("profile_views").notNull().default(0),
   onboardingComplete: boolean("onboarding_complete").notNull().default(false),
@@ -24,4 +26,3 @@ export const vendorProfilesTable = pgTable("vendor_profiles", {
 export const insertVendorProfileSchema = createInsertSchema(vendorProfilesTable).omit({ id: true, createdAt: true });
 export type InsertVendorProfile = z.infer<typeof insertVendorProfileSchema>;
 export type VendorProfile = typeof vendorProfilesTable.$inferSelect;
-

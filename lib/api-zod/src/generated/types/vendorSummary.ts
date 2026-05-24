@@ -17,6 +17,7 @@ export interface VendorSummary {
   avgRating?: number;
   isActive: boolean;
   subscriptionStatus: VendorSummarySubscriptionStatus;
+  trialStartedAt?: string;
+  trialEndsAt?: string;
   onboardingComplete: boolean;
 }
-

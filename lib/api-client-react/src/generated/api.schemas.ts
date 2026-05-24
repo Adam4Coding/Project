@@ -57,6 +57,7 @@ export type VendorSummarySubscriptionStatus =
 
 export const VendorSummarySubscriptionStatus = {
   active: "active",
+  trialing: "trialing",
   inactive: "inactive",
 } as const;
 
@@ -70,6 +71,8 @@ export interface VendorSummary {
   avgRating?: number;
   isActive: boolean;
   subscriptionStatus: VendorSummarySubscriptionStatus;
+  trialStartedAt?: string;
+  trialEndsAt?: string;
   onboardingComplete: boolean;
 }
 
@@ -89,6 +92,7 @@ export type VendorDetailSubscriptionStatus =
 
 export const VendorDetailSubscriptionStatus = {
   active: "active",
+  trialing: "trialing",
   inactive: "inactive",
 } as const;
 
@@ -111,6 +115,8 @@ export interface VendorDetail {
   packages?: PricingPackage[];
   isActive: boolean;
   subscriptionStatus: VendorDetailSubscriptionStatus;
+  trialStartedAt?: string;
+  trialEndsAt?: string;
   avgRating: number;
   profileViews: number;
   totalReviews: number;
@@ -136,7 +142,6 @@ export interface UpdateVendorBody {
   galleryPhotos?: string[];
   startingPrice?: number;
   packages?: PricingPackage[];
-  isActive?: boolean;
 }
 
 export type BookingStatus = (typeof BookingStatus)[keyof typeof BookingStatus];
@@ -232,12 +237,14 @@ export type SubscriptionResponseSubscriptionStatus =
 
 export const SubscriptionResponseSubscriptionStatus = {
   active: "active",
+  trialing: "trialing",
   inactive: "inactive",
 } as const;
 
 export interface SubscriptionResponse {
   success: boolean;
   subscriptionStatus: SubscriptionResponseSubscriptionStatus;
+  trialEndsAt?: string;
 }
 
 export interface VendorStatsResponse {
@@ -258,7 +265,9 @@ export interface OnboardingBody {
   galleryPhotos?: string[];
   startingPrice: number;
   packages?: PricingPackage[];
+  /** @deprecated */
   activateSubscription?: boolean;
+  startFreeTrial?: boolean;
 }
 
 export type ListVendorsParams = {
@@ -271,4 +280,3 @@ export type ListVendorsParams = {
   limit?: number;
   offset?: number;
 };
-

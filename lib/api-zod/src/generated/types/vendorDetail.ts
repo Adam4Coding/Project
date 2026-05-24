@@ -21,10 +21,11 @@ export interface VendorDetail {
   packages?: PricingPackage[];
   isActive: boolean;
   subscriptionStatus: VendorDetailSubscriptionStatus;
+  trialStartedAt?: string;
+  trialEndsAt?: string;
   avgRating: number;
   profileViews: number;
   totalReviews: number;
   onboardingComplete: boolean;
   isSaved?: boolean;
 }
-

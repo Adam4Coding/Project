@@ -4,6 +4,7 @@ import { bookingsTable, vendorProfilesTable, usersTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { requireAuth, requireVendorAuth, requireCustomerAuth, type AuthenticatedRequest } from "../lib/auth";
 import { CreateBookingBody, RespondToBookingBody } from "@workspace/api-zod";
+import { isVendorLive, normalizeVendorSubscription } from "../lib/vendor-subscription";
 
 const router: IRouter = Router();
 
@@ -61,7 +62,13 @@ router.post("/bookings", requireCustomerAuth, async (req, res): Promise<void> =>
     .where(eq(vendorProfilesTable.id, vendorId))
     .limit(1);
 
-  if (!vendor || !vendor.isActive) {
+  if (!vendor) {
+    res.status(404).json({ message: "Vendor not found or not available" });
+    return;
+  }
+
+  const normalizedVendor = await normalizeVendorSubscription(vendor);
+  if (!isVendorLive(normalizedVendor)) {
     res.status(404).json({ message: "Vendor not found or not available" });
     return;
   }

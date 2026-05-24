@@ -1,11 +1,22 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { vendorProfilesTable, usersTable, savedVendorsTable } from "@workspace/db";
-import { eq, and, gte, lte, sql } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { requireAuth, requireVendorAuth, type AuthenticatedRequest } from "../lib/auth";
 import { ListVendorsQueryParams, UpdateMyVendorProfileBody, CompleteOnboardingBody } from "@workspace/api-zod";
+import {
+  formatVendorSubscriptionFields,
+  getFreeTrialEndDate,
+  isVendorLive,
+  normalizeVendorSubscription,
+} from "../lib/vendor-subscription";
 
 const router: IRouter = Router();
+
+function getTrialWindow(now = new Date()) {
+  const trialEndsAt = getFreeTrialEndDate(now);
+  return { trialStartedAt: now, trialEndsAt };
+}
 
 function parseVendorProfile(vp: typeof vendorProfilesTable.$inferSelect) {
   return {
@@ -19,11 +30,10 @@ function parseVendorProfile(vp: typeof vendorProfilesTable.$inferSelect) {
     galleryPhotos: JSON.parse(vp.galleryPhotos || "[]"),
     startingPrice: vp.startingPrice,
     packages: JSON.parse(vp.packages || "[]"),
-    isActive: vp.isActive,
-    subscriptionStatus: vp.subscriptionStatus,
     avgRating: vp.avgRating,
     profileViews: vp.profileViews,
     onboardingComplete: vp.onboardingComplete,
+    ...formatVendorSubscriptionFields(vp),
     totalReviews: 0,
     isSaved: false,
   };
@@ -38,9 +48,8 @@ function parseVendorSummary(vp: typeof vendorProfilesTable.$inferSelect) {
     coverPhoto: vp.coverPhoto,
     startingPrice: vp.startingPrice,
     avgRating: vp.avgRating,
-    isActive: vp.isActive,
-    subscriptionStatus: vp.subscriptionStatus,
     onboardingComplete: vp.onboardingComplete,
+    ...formatVendorSubscriptionFields(vp),
   };
 }
 
@@ -48,11 +57,12 @@ router.get("/vendors/trending", async (_req, res): Promise<void> => {
   const vendors = await db
     .select()
     .from(vendorProfilesTable)
-    .where(and(eq(vendorProfilesTable.isActive, true), eq(vendorProfilesTable.subscriptionStatus, "active")))
+    .where(eq(vendorProfilesTable.isActive, true))
     .orderBy(sql`${vendorProfilesTable.avgRating} DESC`)
     .limit(8);
 
-  res.json({ vendors: vendors.map(parseVendorSummary), total: vendors.length });
+  const normalized = await Promise.all(vendors.map(normalizeVendorSubscription));
+  res.json({ vendors: normalized.map(parseVendorSummary), total: normalized.length });
 });
 
 router.get("/vendors/me", requireVendorAuth, async (req, res): Promise<void> => {
@@ -68,7 +78,7 @@ router.get("/vendors/me", requireVendorAuth, async (req, res): Promise<void> => 
     return;
   }
 
-  res.json({ vendor: parseVendorProfile(vp) });
+  res.json({ vendor: parseVendorProfile(await normalizeVendorSubscription(vp)) });
 });
 
 router.put("/vendors/me", requireVendorAuth, async (req, res): Promise<void> => {
@@ -79,7 +89,7 @@ router.put("/vendors/me", requireVendorAuth, async (req, res): Promise<void> => 
     return;
   }
 
-  const { cartName, category, bio, city, coverPhoto, galleryPhotos, startingPrice, packages, isActive } = parsed.data;
+  const { cartName, category, bio, city, coverPhoto, galleryPhotos, startingPrice, packages } = parsed.data;
   const updateData: Partial<typeof vendorProfilesTable.$inferInsert> = {};
   if (cartName !== undefined) updateData.cartName = cartName;
   if (category !== undefined) updateData.category = category;
@@ -89,7 +99,6 @@ router.put("/vendors/me", requireVendorAuth, async (req, res): Promise<void> => 
   if (galleryPhotos !== undefined) updateData.galleryPhotos = JSON.stringify(galleryPhotos);
   if (startingPrice !== undefined) updateData.startingPrice = startingPrice;
   if (packages !== undefined) updateData.packages = JSON.stringify(packages);
-  if (isActive !== undefined) updateData.isActive = isActive;
 
   const [vp] = await db
     .update(vendorProfilesTable)
@@ -102,7 +111,7 @@ router.put("/vendors/me", requireVendorAuth, async (req, res): Promise<void> => 
     return;
   }
 
-  res.json({ vendor: parseVendorProfile(vp) });
+  res.json({ vendor: parseVendorProfile(await normalizeVendorSubscription(vp)) });
 });
 
 router.get("/vendors", async (req, res): Promise<void> => {
@@ -114,23 +123,12 @@ router.get("/vendors", async (req, res): Promise<void> => {
     rating?: number; limit?: number; offset?: number;
   };
 
-  let query = db
-    .select()
-    .from(vendorProfilesTable)
-    .where(and(
-      eq(vendorProfilesTable.isActive, true),
-      eq(vendorProfilesTable.subscriptionStatus, "active"),
-    ));
-
   const allVendors = await db
     .select()
     .from(vendorProfilesTable)
-    .where(and(
-      eq(vendorProfilesTable.isActive, true),
-      eq(vendorProfilesTable.subscriptionStatus, "active"),
-    ));
+    .where(eq(vendorProfilesTable.isActive, true));
 
-  let filtered = allVendors;
+  let filtered = await Promise.all(allVendors.map(normalizeVendorSubscription));
   if (category) {
     filtered = filtered.filter(v => v.category.toLowerCase() === category.toLowerCase());
   }
@@ -172,6 +170,12 @@ router.get("/vendors/:id", async (req, res): Promise<void> => {
     return;
   }
 
+  const normalizedVendor = await normalizeVendorSubscription(vp);
+  if (!isVendorLive(normalizedVendor)) {
+    res.status(404).json({ message: "Vendor not found" });
+    return;
+  }
+
   // Increment profile views
   await db
     .update(vendorProfilesTable)
@@ -200,8 +204,8 @@ router.get("/vendors/:id", async (req, res): Promise<void> => {
   const { reviewsTable } = await import("@workspace/db");
   const reviews = await db.select().from(reviewsTable).where(eq(reviewsTable.vendorId, id));
 
-  const detail = parseVendorProfile(vp);
-  detail.profileViews = vp.profileViews + 1;
+  const detail = parseVendorProfile(normalizedVendor);
+  detail.profileViews = normalizedVendor.profileViews + 1;
   detail.totalReviews = reviews.length;
   detail.isSaved = isSaved;
 
@@ -216,10 +220,11 @@ router.post("/onboarding", requireVendorAuth, async (req, res): Promise<void> =>
     return;
   }
 
-  const { cartName, category, bio, city, coverPhoto, galleryPhotos, startingPrice, packages, activateSubscription } = parsed.data;
+  const { cartName, category, bio, city, coverPhoto, galleryPhotos, startingPrice, packages, activateSubscription, startFreeTrial } = parsed.data;
 
-  const isActive = activateSubscription === true;
-  const subscriptionStatus = isActive ? "active" : "inactive";
+  const shouldStartTrial = startFreeTrial === true || activateSubscription === true;
+  const trialWindow = shouldStartTrial ? getTrialWindow() : {};
+  const subscriptionStatus = shouldStartTrial ? "trialing" : "inactive";
 
   const [vp] = await db
     .update(vendorProfilesTable)
@@ -232,8 +237,9 @@ router.post("/onboarding", requireVendorAuth, async (req, res): Promise<void> =>
       galleryPhotos: JSON.stringify(galleryPhotos ?? []),
       startingPrice,
       packages: JSON.stringify(packages ?? []),
-      isActive,
+      isActive: true,
       subscriptionStatus,
+      ...trialWindow,
       onboardingComplete: true,
     })
     .where(eq(vendorProfilesTable.userId, authReq.user!.userId))
@@ -284,9 +290,16 @@ router.get("/vendor-stats", requireVendorAuth, async (req, res): Promise<void> =
 
 router.post("/subscription/activate", requireVendorAuth, async (req, res): Promise<void> => {
   const authReq = req as AuthenticatedRequest;
+  const trialWindow = getTrialWindow();
+  // TODO: Wire this endpoint to Stripe Checkout before collecting payment or
+  // marking vendors active through a real paid subscription.
   const [vp] = await db
     .update(vendorProfilesTable)
-    .set({ subscriptionStatus: "active", isActive: true })
+    .set({
+      subscriptionStatus: "trialing",
+      isActive: true,
+      ...trialWindow,
+    })
     .where(eq(vendorProfilesTable.userId, authReq.user!.userId))
     .returning();
 
@@ -295,8 +308,7 @@ router.post("/subscription/activate", requireVendorAuth, async (req, res): Promi
     return;
   }
 
-  res.json({ success: true, subscriptionStatus: "active" });
+  res.json({ success: true, subscriptionStatus: "trialing", trialEndsAt: vp.trialEndsAt?.toISOString() });
 });
 
 export default router;
-

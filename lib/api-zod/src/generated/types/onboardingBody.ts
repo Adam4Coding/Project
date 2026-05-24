@@ -16,6 +16,7 @@ export interface OnboardingBody {
   galleryPhotos?: string[];
   startingPrice: number;
   packages?: PricingPackage[];
+  /** @deprecated */
   activateSubscription?: boolean;
+  startFreeTrial?: boolean;
 }
-

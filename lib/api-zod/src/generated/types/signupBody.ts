@@ -16,4 +16,3 @@ export interface SignupBody {
   category?: string;
   city?: string;
 }
-

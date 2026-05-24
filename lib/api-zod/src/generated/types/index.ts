@@ -41,4 +41,3 @@ export * from "./vendorListResponse";
 export * from "./vendorStatsResponse";
 export * from "./vendorSummary";
 export * from "./vendorSummarySubscriptionStatus";
-

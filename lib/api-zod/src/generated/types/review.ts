@@ -16,4 +16,3 @@ export interface Review {
   createdAt: string;
   customerName?: string;
 }
-

@@ -13,4 +13,3 @@ export const BookingStatus = {
   confirmed: "confirmed",
   declined: "declined",
 } as const;
-

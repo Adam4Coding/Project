@@ -13,4 +13,3 @@ export const UserProfileRole = {
   customer: "customer",
   vendor: "vendor",
 } as const;
-

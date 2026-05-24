@@ -5,8 +5,23 @@ import { usersTable, vendorProfilesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { signToken, requireAuth, type AuthenticatedRequest } from "../lib/auth";
 import { SignupBody, LoginBody } from "@workspace/api-zod";
+import { formatVendorSubscriptionFields, normalizeVendorSubscription } from "../lib/vendor-subscription";
 
 const router: IRouter = Router();
+
+function toAuthVendorSummary(vp: typeof vendorProfilesTable.$inferSelect) {
+  return {
+    id: vp.id,
+    cartName: vp.cartName,
+    category: vp.category,
+    city: vp.city,
+    coverPhoto: vp.coverPhoto,
+    startingPrice: vp.startingPrice,
+    avgRating: vp.avgRating,
+    onboardingComplete: vp.onboardingComplete,
+    ...formatVendorSubscriptionFields(vp),
+  };
+}
 
 router.post("/auth/signup", async (req, res): Promise<void> => {
   const parsed = SignupBody.safeParse(req.body);
@@ -37,18 +52,7 @@ router.post("/auth/signup", async (req, res): Promise<void> => {
       subscriptionStatus: "inactive",
       onboardingComplete: false,
     }).returning();
-    vendorProfile = {
-      id: vp.id,
-      cartName: vp.cartName,
-      category: vp.category,
-      city: vp.city,
-      coverPhoto: vp.coverPhoto,
-      startingPrice: vp.startingPrice,
-      avgRating: vp.avgRating,
-      isActive: vp.isActive,
-      subscriptionStatus: vp.subscriptionStatus,
-      onboardingComplete: vp.onboardingComplete,
-    };
+    vendorProfile = toAuthVendorSummary(vp);
   }
 
   const token = signToken({ userId: user.id, role: user.role, email: user.email });
@@ -84,18 +88,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   if (user.role === "vendor") {
     const [vp] = await db.select().from(vendorProfilesTable).where(eq(vendorProfilesTable.userId, user.id)).limit(1);
     if (vp) {
-      vendorProfile = {
-        id: vp.id,
-        cartName: vp.cartName,
-        category: vp.category,
-        city: vp.city,
-        coverPhoto: vp.coverPhoto,
-        startingPrice: vp.startingPrice,
-        avgRating: vp.avgRating,
-        isActive: vp.isActive,
-        subscriptionStatus: vp.subscriptionStatus,
-        onboardingComplete: vp.onboardingComplete,
-      };
+      vendorProfile = toAuthVendorSummary(await normalizeVendorSubscription(vp));
     }
   }
 
@@ -120,18 +113,7 @@ router.get("/auth/me", requireAuth, async (req, res): Promise<void> => {
   if (user.role === "vendor") {
     const [vp] = await db.select().from(vendorProfilesTable).where(eq(vendorProfilesTable.userId, user.id)).limit(1);
     if (vp) {
-      vendorProfile = {
-        id: vp.id,
-        cartName: vp.cartName,
-        category: vp.category,
-        city: vp.city,
-        coverPhoto: vp.coverPhoto,
-        startingPrice: vp.startingPrice,
-        avgRating: vp.avgRating,
-        isActive: vp.isActive,
-        subscriptionStatus: vp.subscriptionStatus,
-        onboardingComplete: vp.onboardingComplete,
-      };
+      vendorProfile = toAuthVendorSummary(await normalizeVendorSubscription(vp));
     }
   }
 
@@ -142,4 +124,3 @@ router.get("/auth/me", requireAuth, async (req, res): Promise<void> => {
 });
 
 export default router;
-

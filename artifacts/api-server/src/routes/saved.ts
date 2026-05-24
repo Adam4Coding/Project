@@ -3,6 +3,7 @@ import { db } from "@workspace/db";
 import { savedVendorsTable, vendorProfilesTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { requireCustomerAuth, type AuthenticatedRequest } from "../lib/auth";
+import { formatVendorSubscriptionFields, isVendorLive, normalizeVendorSubscription } from "../lib/vendor-subscription";
 
 const router: IRouter = Router();
 
@@ -21,17 +22,18 @@ router.get("/saved", requireCustomerAuth, async (req, res): Promise<void> => {
         .where(eq(vendorProfilesTable.id, s.vendorId))
         .limit(1);
       if (!vp) return null;
+      const normalizedVendor = await normalizeVendorSubscription(vp);
+      if (!isVendorLive(normalizedVendor)) return null;
       return {
-        id: vp.id,
-        cartName: vp.cartName,
-        category: vp.category,
-        city: vp.city,
-        coverPhoto: vp.coverPhoto,
-        startingPrice: vp.startingPrice,
-        avgRating: vp.avgRating,
-        isActive: vp.isActive,
-        subscriptionStatus: vp.subscriptionStatus,
-        onboardingComplete: vp.onboardingComplete,
+        id: normalizedVendor.id,
+        cartName: normalizedVendor.cartName,
+        category: normalizedVendor.category,
+        city: normalizedVendor.city,
+        coverPhoto: normalizedVendor.coverPhoto,
+        startingPrice: normalizedVendor.startingPrice,
+        avgRating: normalizedVendor.avgRating,
+        onboardingComplete: normalizedVendor.onboardingComplete,
+        ...formatVendorSubscriptionFields(normalizedVendor),
       };
     })
   );

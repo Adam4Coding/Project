@@ -14,4 +14,3 @@ export interface CreateBookingBody {
   location: string;
   message?: string;
 }
-

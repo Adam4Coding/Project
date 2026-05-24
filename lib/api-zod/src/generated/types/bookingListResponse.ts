@@ -10,4 +10,3 @@ import type { Booking } from "./booking";
 export interface BookingListResponse {
   bookings: Booking[];
 }
-

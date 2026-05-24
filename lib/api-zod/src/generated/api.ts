@@ -54,7 +54,9 @@ export const LoginResponse = zod.object({
       startingPrice: zod.number().optional(),
       avgRating: zod.number().optional(),
       isActive: zod.boolean(),
-      subscriptionStatus: zod.enum(["active", "inactive"]),
+      subscriptionStatus: zod.enum(["active", "trialing", "inactive"]),
+      trialStartedAt: zod.string().optional(),
+      trialEndsAt: zod.string().optional(),
       onboardingComplete: zod.boolean(),
     })
     .optional(),
@@ -81,7 +83,9 @@ export const GetMeResponse = zod.object({
       startingPrice: zod.number().optional(),
       avgRating: zod.number().optional(),
       isActive: zod.boolean(),
-      subscriptionStatus: zod.enum(["active", "inactive"]),
+      subscriptionStatus: zod.enum(["active", "trialing", "inactive"]),
+      trialStartedAt: zod.string().optional(),
+      trialEndsAt: zod.string().optional(),
       onboardingComplete: zod.boolean(),
     })
     .optional(),
@@ -112,7 +116,9 @@ export const ListVendorsResponse = zod.object({
       startingPrice: zod.number().optional(),
       avgRating: zod.number().optional(),
       isActive: zod.boolean(),
-      subscriptionStatus: zod.enum(["active", "inactive"]),
+      subscriptionStatus: zod.enum(["active", "trialing", "inactive"]),
+      trialStartedAt: zod.string().optional(),
+      trialEndsAt: zod.string().optional(),
       onboardingComplete: zod.boolean(),
     }),
   ),
@@ -133,7 +139,9 @@ export const GetTrendingVendorsResponse = zod.object({
       startingPrice: zod.number().optional(),
       avgRating: zod.number().optional(),
       isActive: zod.boolean(),
-      subscriptionStatus: zod.enum(["active", "inactive"]),
+      subscriptionStatus: zod.enum(["active", "trialing", "inactive"]),
+      trialStartedAt: zod.string().optional(),
+      trialEndsAt: zod.string().optional(),
       onboardingComplete: zod.boolean(),
     }),
   ),
@@ -168,7 +176,9 @@ export const GetVendorResponse = zod.object({
       )
       .optional(),
     isActive: zod.boolean(),
-    subscriptionStatus: zod.enum(["active", "inactive"]),
+    subscriptionStatus: zod.enum(["active", "trialing", "inactive"]),
+    trialStartedAt: zod.string().optional(),
+    trialEndsAt: zod.string().optional(),
     avgRating: zod.number(),
     profileViews: zod.number(),
     totalReviews: zod.number(),
@@ -201,7 +211,9 @@ export const GetMyVendorProfileResponse = zod.object({
       )
       .optional(),
     isActive: zod.boolean(),
-    subscriptionStatus: zod.enum(["active", "inactive"]),
+    subscriptionStatus: zod.enum(["active", "trialing", "inactive"]),
+    trialStartedAt: zod.string().optional(),
+    trialEndsAt: zod.string().optional(),
     avgRating: zod.number(),
     profileViews: zod.number(),
     totalReviews: zod.number(),
@@ -230,7 +242,6 @@ export const UpdateMyVendorProfileBody = zod.object({
       }),
     )
     .optional(),
-  isActive: zod.boolean().optional(),
 });
 
 export const UpdateMyVendorProfileResponse = zod.object({
@@ -254,7 +265,9 @@ export const UpdateMyVendorProfileResponse = zod.object({
       )
       .optional(),
     isActive: zod.boolean(),
-    subscriptionStatus: zod.enum(["active", "inactive"]),
+    subscriptionStatus: zod.enum(["active", "trialing", "inactive"]),
+    trialStartedAt: zod.string().optional(),
+    trialEndsAt: zod.string().optional(),
     avgRating: zod.number(),
     profileViews: zod.number(),
     totalReviews: zod.number(),
@@ -399,7 +412,9 @@ export const GetSavedVendorsResponse = zod.object({
       startingPrice: zod.number().optional(),
       avgRating: zod.number().optional(),
       isActive: zod.boolean(),
-      subscriptionStatus: zod.enum(["active", "inactive"]),
+      subscriptionStatus: zod.enum(["active", "trialing", "inactive"]),
+      trialStartedAt: zod.string().optional(),
+      trialEndsAt: zod.string().optional(),
       onboardingComplete: zod.boolean(),
     }),
   ),
@@ -421,7 +436,8 @@ export const ToggleSavedVendorResponse = zod.object({
  */
 export const ActivateSubscriptionResponse = zod.object({
   success: zod.boolean(),
-  subscriptionStatus: zod.enum(["active", "inactive"]),
+  subscriptionStatus: zod.enum(["active", "trialing", "inactive"]),
+  trialEndsAt: zod.string().optional(),
 });
 
 /**
@@ -457,5 +473,5 @@ export const CompleteOnboardingBody = zod.object({
     )
     .optional(),
   activateSubscription: zod.boolean().optional(),
+  startFreeTrial: zod.boolean().optional(),
 });
-

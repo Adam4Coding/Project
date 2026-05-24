@@ -14,4 +14,3 @@ export interface UserProfile {
   role: UserProfileRole;
   createdAt: string;
 }
-

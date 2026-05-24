@@ -512,7 +512,11 @@ components:
           type: boolean
         subscriptionStatus:
           type: string
-          enum: [active, inactive]
+          enum: [active, trialing, inactive]
+        trialStartedAt:
+          type: string
+        trialEndsAt:
+          type: string
         onboardingComplete:
           type: boolean
       required: [id, cartName, category, city, isActive, subscriptionStatus, onboardingComplete]
@@ -548,7 +552,11 @@ components:
           type: boolean
         subscriptionStatus:
           type: string
-          enum: [active, inactive]
+          enum: [active, trialing, inactive]
+        trialStartedAt:
+          type: string
+        trialEndsAt:
+          type: string
         avgRating:
           type: number
         profileViews:
@@ -613,8 +621,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/PricingPackage"
-        isActive:
-          type: boolean
 
     Booking:
       type: object
@@ -764,7 +770,9 @@ components:
           type: boolean
         subscriptionStatus:
           type: string
-          enum: [active, inactive]
+          enum: [active, trialing, inactive]
+        trialEndsAt:
+          type: string
       required: [success, subscriptionStatus]
 
     VendorStatsResponse:
@@ -808,6 +816,9 @@ components:
           items:
             $ref: "#/components/schemas/PricingPackage"
         activateSubscription:
+          type: boolean
+          deprecated: true
+        startFreeTrial:
           type: boolean
       required: [cartName, category, bio, city, startingPrice]
 

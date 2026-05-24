@@ -10,4 +10,3 @@ import type { Review } from "./review";
 export interface ReviewListResponse {
   reviews: Review[];
 }
-

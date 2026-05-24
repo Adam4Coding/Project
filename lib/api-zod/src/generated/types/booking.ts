@@ -23,4 +23,3 @@ export interface Booking {
   vendorCartName?: string;
   hasReview?: boolean;
 }
-

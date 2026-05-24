@@ -11,4 +11,3 @@ export interface VendorListResponse {
   vendors: VendorSummary[];
   total: number;
 }
-

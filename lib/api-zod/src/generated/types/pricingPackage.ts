@@ -11,4 +11,3 @@ export interface PricingPackage {
   price: number;
   description: string;
 }
-

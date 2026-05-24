@@ -11,6 +11,6 @@ export type SubscriptionResponseSubscriptionStatus =
 
 export const SubscriptionResponseSubscriptionStatus = {
   active: "active",
+  trialing: "trialing",
   inactive: "inactive",
 } as const;
-

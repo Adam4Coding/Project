@@ -16,6 +16,4 @@ export interface UpdateVendorBody {
   galleryPhotos?: string[];
   startingPrice?: number;
   packages?: PricingPackage[];
-  isActive?: boolean;
 }
-

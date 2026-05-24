@@ -10,4 +10,3 @@ import type { VendorDetail } from "./vendorDetail";
 export interface VendorDetailResponse {
   vendor: VendorDetail;
 }
-

@@ -11,6 +11,6 @@ export type VendorSummarySubscriptionStatus =
 
 export const VendorSummarySubscriptionStatus = {
   active: "active",
+  trialing: "trialing",
   inactive: "inactive",
 } as const;
-

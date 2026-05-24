@@ -12,4 +12,3 @@ export interface MeResponse {
   user: UserProfile;
   vendorProfile?: VendorSummary;
 }
-

@@ -14,4 +14,3 @@ export interface VendorStatsResponse {
   confirmedBookings: number;
   declinedBookings: number;
 }
-
