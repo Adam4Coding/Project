@@ -30,13 +30,13 @@ lib/
 ├── api-zod/            # Generated Zod schemas from OpenAPI
 └── db/                 # Drizzle ORM schema + DB connection
 scripts/
-└── src/seed.ts         # Database seed script
+└── src/seed.ts         # Removes old seeded demo data
 ```
 
-## Demo Accounts
+## Accounts
 
-- **Customer**: hello@demo.com / demo1234
-- **Vendor** (Chicago Matcha Bar): cart@demo.com / demo1234
+- Create customer accounts from the signup page
+- **Vendor**: create a new vendor account from the signup page and start the free month from onboarding
 
 ## Pages
 
@@ -69,7 +69,8 @@ All routes are under `/api` prefix.
 - `GET /api/reviews/vendor/:vendorId` — Get vendor reviews
 - `GET /api/saved` — Get saved vendors
 - `POST /api/saved/:vendorId` — Toggle save/unsave
-- `POST /api/subscription/activate` — Activate mock subscription ($59/mo)
+- `POST /api/subscription/activate` — Start vendor free month before Stripe billing is connected
+- `POST /api/subscription/social-promo` — Submit proof for one social promotion bonus month
 - `GET /api/vendor-stats` — Vendor dashboard stats
 - `POST /api/onboarding` — Complete vendor onboarding
 
@@ -81,14 +82,9 @@ All routes are under `/api` prefix.
 - `reviews` — id, booking_id, customer_id, vendor_id, rating, body
 - `saved_vendors` — id, customer_id, vendor_id
 
-## Seeded Vendors (12 total)
+## Seeded Demo Data
 
-- 2 Matcha carts (Chicago, LA)
-- 2 Mocktails (NYC, Austin)
-- 2 Churros (LA, Miami)
-- 2 Espresso (Chicago, NYC)
-- 2 Crepes (NYC, LA)
-- 2 Mini Donuts (Austin, Miami)
+The app no longer creates fake public vendors. Startup and the seed script remove the old demo accounts and generated demo reviews/bookings if they exist.
 
 ## Design System
 
@@ -107,10 +103,9 @@ pnpm --filter @workspace/api-server run dev
 # Start frontend
 pnpm --filter @workspace/cartly run dev
 
-# Seed database
+# Remove old seeded demo data
 pnpm --filter @workspace/scripts run seed
 
 # Run codegen after OpenAPI changes
 pnpm --filter @workspace/api-spec run codegen
 ```
-

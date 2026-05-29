@@ -2,7 +2,7 @@ import { PageTransition } from "@/components/shared/page-transition";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, MapPin, Star, CalendarCheck, Store } from "lucide-react";
+import { Search, MapPin, CalendarCheck, Store, Sparkles } from "lucide-react";
 import { useGetTrendingVendors } from "@workspace/api-client-react";
 import { VendorCard, VendorCardSkeleton } from "@/components/shared/vendor-card";
 import { useState } from "react";
@@ -75,26 +75,21 @@ export default function Home() {
               </Button>
             </form>
 
-            {/* Trust bar */}
+            {/* Launch bar */}
             <div className="flex flex-wrap items-center justify-center gap-6 md:gap-10 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
                 <Store className="h-4 w-4 text-primary" />
-                <span><strong className="text-foreground font-semibold">50+</strong> carts listed</span>
+                <span><strong className="text-foreground font-semibold">Vendor profiles</strong> built for real carts</span>
               </div>
               <div className="hidden md:block w-px h-4 bg-border"></div>
               <div className="flex items-center gap-2">
                 <CalendarCheck className="h-4 w-4 text-primary" />
-                <span><strong className="text-foreground font-semibold">1,200+</strong> events booked</span>
+                <span><strong className="text-foreground font-semibold">Booking requests</strong> sent directly to vendors</span>
               </div>
               <div className="hidden md:block w-px h-4 bg-border"></div>
               <div className="flex items-center gap-2">
-                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                <span><strong className="text-foreground font-semibold">4.9</strong> avg rating</span>
-              </div>
-              <div className="hidden md:block w-px h-4 bg-border"></div>
-              <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-primary" />
-                <span>Available in <strong className="text-foreground font-semibold">12 cities</strong></span>
+                <Sparkles className="h-4 w-4 text-primary" />
+                <span><strong className="text-foreground font-semibold">First month free</strong> for early vendors</span>
               </div>
             </div>
           </div>
@@ -125,7 +120,7 @@ export default function Home() {
           <div className="flex justify-between items-end mb-10">
             <div>
               <h2 className="text-3xl md:text-4xl font-serif font-bold text-foreground mb-3">Trending near you</h2>
-              <p className="text-muted-foreground text-lg">The most booked and highly rated carts right now.</p>
+              <p className="text-muted-foreground text-lg">New vendor profiles will appear here as carts join Vended.</p>
             </div>
             <Link href="/explore">
               <Button variant="outline" className="hidden md:flex rounded-full border-border hover:bg-accent hover:text-foreground">
@@ -142,8 +137,8 @@ export default function Home() {
                 <VendorCard key={vendor.id} vendor={vendor} />
               ))
             ) : (
-              <div className="col-span-full py-12 text-center text-muted-foreground border border-dashed border-border rounded-2xl">
-                No trending carts found at the moment.
+              <div className="col-span-full py-12 text-center text-muted-foreground border border-dashed border-border rounded-2xl bg-card">
+                Real vendor profiles are coming soon. If you run a specialty cart, you can list yours today.
               </div>
             )}
           </div>
@@ -230,7 +225,7 @@ export default function Home() {
       <section className="py-20 bg-primary text-primary-foreground">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">Run a specialty cart?</h2>
-          <p className="text-primary-foreground/80 text-lg mb-8 max-w-xl mx-auto">Join Vended and get your cart in front of thousands of event hosts every month.</p>
+          <p className="text-primary-foreground/80 text-lg mb-8 max-w-xl mx-auto">Join Vended early and give event hosts a polished way to find and request your cart.</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/signup">
               <Button size="lg" className="rounded-full bg-white text-primary hover:bg-white/90 font-semibold px-8 h-12">
@@ -247,4 +242,3 @@ export default function Home() {
     </PageTransition>
   );
 }
-

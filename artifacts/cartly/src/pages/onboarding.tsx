@@ -265,21 +265,25 @@ export default function Onboarding() {
               >
                 <div className="mb-8">
                   <h2 className="text-2xl font-serif font-bold mb-2">Showcase your cart</h2>
-                  <p className="text-muted-foreground">Upload a great cover photo. (Simulated for this demo)</p>
+                  <p className="text-muted-foreground">Add a great cover photo. High quality photos increase booking rates.</p>
                 </div>
                 
                 <div className="border-2 border-dashed border-border rounded-2xl p-12 flex flex-col items-center justify-center text-center bg-muted/20">
                   <div className="w-16 h-16 bg-background rounded-full shadow-sm flex items-center justify-center mb-4">
                     <Upload className="w-8 h-8 text-primary" />
                   </div>
-                  <h3 className="font-bold text-lg mb-2">Click to upload cover photo</h3>
-                  <p className="text-sm text-muted-foreground max-w-sm mb-6">High quality photos increase booking rates by 3x. Use bright, well-lit photos.</p>
+                  <h3 className="font-bold text-lg mb-2">Cover photo URL</h3>
+                  <p className="text-sm text-muted-foreground max-w-sm mb-6">Paste a bright, well-lit photo link for your cart.</p>
+                  <Input
+                    type="url"
+                    value={formData.coverPhoto}
+                    onChange={e => setFormData({...formData, coverPhoto: e.target.value})}
+                    className="bg-background max-w-md mb-6"
+                    placeholder="https://example.com/your-cart-photo.jpg"
+                  />
                   
                   <div className="relative w-full max-w-md aspect-video rounded-xl overflow-hidden border border-border">
                     <img src={formData.coverPhoto} alt="Cover preview" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer">
-                      <span className="text-white font-medium">Change Photo</span>
-                    </div>
                   </div>
                 </div>
               </motion.div>

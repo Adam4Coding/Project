@@ -5,8 +5,10 @@ import { eq, and } from "drizzle-orm";
 import { requireAuth, requireVendorAuth, requireCustomerAuth, type AuthenticatedRequest } from "../lib/auth";
 import { CreateBookingBody, RespondToBookingBody } from "@workspace/api-zod";
 import { isVendorLive, normalizeVendorSubscription } from "../lib/vendor-subscription";
+import { seededDemoVendorNames } from "../lib/demo-data-cleanup";
 
 const router: IRouter = Router();
+const hiddenSeededDemoCartNames = new Set(seededDemoVendorNames);
 
 async function enrichBooking(booking: typeof bookingsTable.$inferSelect) {
   const [vendor] = await db
@@ -68,7 +70,7 @@ router.post("/bookings", requireCustomerAuth, async (req, res): Promise<void> =>
   }
 
   const normalizedVendor = await normalizeVendorSubscription(vendor);
-  if (!isVendorLive(normalizedVendor)) {
+  if (!isVendorLive(normalizedVendor) || hiddenSeededDemoCartNames.has(normalizedVendor.cartName)) {
     res.status(404).json({ message: "Vendor not found or not available" });
     return;
   }
@@ -170,4 +172,3 @@ router.put("/bookings/:id/respond", requireVendorAuth, async (req, res): Promise
 });
 
 export default router;
-

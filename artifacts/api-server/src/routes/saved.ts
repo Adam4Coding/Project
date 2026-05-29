@@ -4,8 +4,10 @@ import { savedVendorsTable, vendorProfilesTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { requireCustomerAuth, type AuthenticatedRequest } from "../lib/auth";
 import { formatVendorSubscriptionFields, isVendorLive, normalizeVendorSubscription } from "../lib/vendor-subscription";
+import { seededDemoVendorNames } from "../lib/demo-data-cleanup";
 
 const router: IRouter = Router();
+const hiddenSeededDemoCartNames = new Set(seededDemoVendorNames);
 
 router.get("/saved", requireCustomerAuth, async (req, res): Promise<void> => {
   const authReq = req as AuthenticatedRequest;
@@ -23,7 +25,7 @@ router.get("/saved", requireCustomerAuth, async (req, res): Promise<void> => {
         .limit(1);
       if (!vp) return null;
       const normalizedVendor = await normalizeVendorSubscription(vp);
-      if (!isVendorLive(normalizedVendor)) return null;
+      if (!isVendorLive(normalizedVendor) || hiddenSeededDemoCartNames.has(normalizedVendor.cartName)) return null;
       return {
         id: normalizedVendor.id,
         cartName: normalizedVendor.cartName,
@@ -76,4 +78,3 @@ router.post("/saved/:vendorId", requireCustomerAuth, async (req, res): Promise<v
 });
 
 export default router;
-

@@ -175,7 +175,10 @@ export default function VendorDashboard() {
         onSuccess: () => {
           toast.success("Your free month has started. Customers can now find your cart.");
           queryClient.invalidateQueries({ queryKey: getGetMyVendorProfileQueryKey() });
-        }
+        },
+        onError: (err) => {
+          toast.error(getApiErrorMessage(err, "Could not start your free month"));
+        },
       }
     );
   };
@@ -222,6 +225,8 @@ export default function VendorDashboard() {
   const isTrialing = subscriptionStatus === "trialing";
   const isPlanActive = subscriptionStatus === "active";
   const trialEndsAt = profileData?.vendor?.trialEndsAt;
+  const hasUsedFreeTrial = Boolean(profileData?.vendor?.trialStartedAt || trialEndsAt);
+  const canStartFreeTrial = isFreeProfile && !hasUsedFreeTrial;
   const promoStatus = (profileData?.vendor as { socialPromoStatus?: string } | undefined)?.socialPromoStatus ?? "none";
   const promoSubmittedAt = (profileData?.vendor as { socialPromoSubmittedAt?: string } | undefined)?.socialPromoSubmittedAt;
   const bonusTrialEndsAt = (profileData?.vendor as { bonusTrialEndsAt?: string } | undefined)?.bonusTrialEndsAt;
@@ -236,10 +241,18 @@ export default function VendorDashboard() {
               Your cart is not showing to customers yet
             </AlertTitle>
             <AlertDescription className="mt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <span>Start your free month to show your cart in Explore and start receiving booking requests.</span>
-              <Button size="sm" onClick={handleActivateSub} disabled={activateSubscription.isPending} className="bg-amber-600 hover:bg-amber-700 text-white shrink-0">
-                {activateSubscription.isPending ? "Starting..." : "Start my free month"}
-              </Button>
+              <span>
+                {canStartFreeTrial
+                  ? "Start your free month to show your cart in Explore and start receiving booking requests."
+                  : "Your free month has ended, so your cart is hidden until Stripe billing is connected."}
+              </span>
+              {canStartFreeTrial ? (
+                <Button size="sm" onClick={handleActivateSub} disabled={activateSubscription.isPending} className="bg-amber-600 hover:bg-amber-700 text-white shrink-0">
+                  {activateSubscription.isPending ? "Starting..." : "Start my free month"}
+                </Button>
+              ) : (
+                <span className="text-sm font-medium">Stripe setup is needed to turn your cart back on after the free month.</span>
+              )}
             </AlertDescription>
           </Alert>
         )}
@@ -535,9 +548,13 @@ export default function VendorDashboard() {
                   <li className="flex items-center gap-3"><Check className="w-5 h-5 text-primary" /> Vendor dashboard analytics</li>
                 </ul>
                 
-                {isFreeProfile ? (
+                {canStartFreeTrial ? (
                   <Button onClick={handleActivateSub} disabled={activateSubscription.isPending} className="w-full h-12 text-lg bg-primary hover:bg-primary/90">
                     {activateSubscription.isPending ? "Starting..." : "Start my free month"}
+                  </Button>
+                ) : isFreeProfile ? (
+                  <Button variant="outline" className="w-full" disabled>
+                    Stripe setup needed for paid plan
                   </Button>
                 ) : (
                   <Button variant="outline" className="w-full" disabled>
@@ -550,7 +567,7 @@ export default function VendorDashboard() {
                 <div className="flex justify-between items-start gap-4 mb-6">
                   <div>
                     <h2 className="font-serif font-bold text-2xl mb-2">Bonus Month</h2>
-                    <p className="text-muted-foreground">Share Vended to your story, tag us, and submit proof for one extra free month.</p>
+                    <p className="text-muted-foreground">Share Vended to your story, tag @tryvended, and submit proof for one extra free month.</p>
                   </div>
                   <Badge className={promoStatus === "approved" ? "bg-emerald-500/10 text-emerald-600 border-none" : promoStatus === "pending" ? "bg-amber-500/10 text-amber-600 border-none" : "bg-slate-500/10 text-slate-600 border-none"}>
                     {promoStatus === "approved" ? "Approved" : promoStatus === "pending" ? "Under review" : "Available"}
@@ -558,9 +575,9 @@ export default function VendorDashboard() {
                 </div>
 
                 <ul className="space-y-3 mb-6 text-sm">
-                  <li className="flex items-center gap-3"><Check className="w-5 h-5 text-primary" /> Tag Vended in your story or post</li>
+                  <li className="flex items-center gap-3"><Check className="w-5 h-5 text-primary" /> Tag @tryvended in your story or post</li>
                   <li className="flex items-center gap-3"><Check className="w-5 h-5 text-primary" /> Keep it live for at least 24 hours</li>
-                  <li className="flex items-center gap-3"><Check className="w-5 h-5 text-primary" /> One bonus month per vendor</li>
+                  <li className="flex items-center gap-3"><Check className="w-5 h-5 text-primary" /> Maximum one bonus month per vendor</li>
                 </ul>
 
                 {promoStatus === "approved" ? (

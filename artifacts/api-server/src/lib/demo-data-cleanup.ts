@@ -1,14 +1,7 @@
-import { db } from "@workspace/db";
-import {
-  usersTable,
-  vendorProfilesTable,
-  bookingsTable,
-  reviewsTable,
-  savedVendorsTable,
-} from "@workspace/db";
+import { bookingsTable, db, reviewsTable, savedVendorsTable, usersTable, vendorProfilesTable } from "@workspace/db";
 import { eq, inArray } from "drizzle-orm";
 
-const seededDemoVendorEmails = [
+export const seededDemoVendorEmails = [
   "cart@demo.com",
   "matchabell@vendor.com",
   "mocktailmaven@vendor.com",
@@ -23,19 +16,31 @@ const seededDemoVendorEmails = [
   "glaze@vendor.com",
 ];
 
+export const seededDemoVendorNames = [
+  "Matcha by Ren",
+  "The Matcha Bell",
+  "Mocktail Maven",
+  "Sober Craft Bar",
+  "Churro Time",
+  "Golden Churro Co.",
+  "The Dose Espresso",
+  "Roaming Bean",
+  "La Petite Crêperie",
+  "Crêpe Wave",
+  "Donut Spin",
+  "Glaze Mini Donuts",
+];
+
 const seededDemoCustomerEmails = ["hello@demo.com"];
 
-async function seed() {
-  console.log("Cleaning seeded demo data...");
-
+export async function removeSeededDemoData() {
   const demoUsers = await db
     .select()
     .from(usersTable)
     .where(inArray(usersTable.email, [...seededDemoVendorEmails, ...seededDemoCustomerEmails]));
 
   if (demoUsers.length === 0) {
-    console.log("No seeded demo data found.");
-    process.exit(0);
+    return { removedUsers: 0, removedVendors: 0 };
   }
 
   const demoUserIds = demoUsers.map((user) => user.id);
@@ -58,11 +63,5 @@ async function seed() {
     await db.delete(usersTable).where(eq(usersTable.id, userId));
   }
 
-  console.log(`Removed ${demoVendorIds.length} demo vendors and ${demoUsers.length} demo users.`);
-  process.exit(0);
+  return { removedUsers: demoUsers.length, removedVendors: demoVendorIds.length };
 }
-
-seed().catch((err) => {
-  console.error("Seed cleanup failed:", err);
-  process.exit(1);
-});

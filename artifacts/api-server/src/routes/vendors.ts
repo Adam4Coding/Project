@@ -10,8 +10,11 @@ import {
   isVendorLive,
   normalizeVendorSubscription,
 } from "../lib/vendor-subscription";
+import { seededDemoVendorNames } from "../lib/demo-data-cleanup";
 
 const router: IRouter = Router();
+const hiddenSeededDemoCartNames = new Set(seededDemoVendorNames);
+const supportedSocialPromoPlatforms = new Set(["instagram", "tiktok", "facebook", "linkedin", "twitter", "x"]);
 
 function getTrialWindow(now = new Date()) {
   const trialEndsAt = getFreeTrialEndDate(now);
@@ -53,15 +56,21 @@ function parseVendorSummary(vp: typeof vendorProfilesTable.$inferSelect) {
   };
 }
 
+function isPublicVendor(vp: typeof vendorProfilesTable.$inferSelect) {
+  return isVendorLive(vp) && !hiddenSeededDemoCartNames.has(vp.cartName);
+}
+
 router.get("/vendors/trending", async (_req, res): Promise<void> => {
   const vendors = await db
     .select()
     .from(vendorProfilesTable)
     .where(eq(vendorProfilesTable.isActive, true))
     .orderBy(sql`${vendorProfilesTable.avgRating} DESC`)
-    .limit(8);
+    .limit(24);
 
-  const normalized = await Promise.all(vendors.map(normalizeVendorSubscription));
+  const normalized = (await Promise.all(vendors.map(normalizeVendorSubscription)))
+    .filter(isPublicVendor)
+    .slice(0, 8);
   res.json({ vendors: normalized.map(parseVendorSummary), total: normalized.length });
 });
 
@@ -128,7 +137,7 @@ router.get("/vendors", async (req, res): Promise<void> => {
     .from(vendorProfilesTable)
     .where(eq(vendorProfilesTable.isActive, true));
 
-  let filtered = await Promise.all(allVendors.map(normalizeVendorSubscription));
+  let filtered = (await Promise.all(allVendors.map(normalizeVendorSubscription))).filter(isPublicVendor);
   if (category) {
     filtered = filtered.filter(v => v.category.toLowerCase() === category.toLowerCase());
   }
@@ -171,7 +180,7 @@ router.get("/vendors/:id", async (req, res): Promise<void> => {
   }
 
   const normalizedVendor = await normalizeVendorSubscription(vp);
-  if (!isVendorLive(normalizedVendor)) {
+  if (!isPublicVendor(normalizedVendor)) {
     res.status(404).json({ message: "Vendor not found" });
     return;
   }
@@ -222,9 +231,25 @@ router.post("/onboarding", requireVendorAuth, async (req, res): Promise<void> =>
 
   const { cartName, category, bio, city, coverPhoto, galleryPhotos, startingPrice, packages, activateSubscription, startFreeTrial } = parsed.data;
 
+  const [existingProfile] = await db
+    .select()
+    .from(vendorProfilesTable)
+    .where(eq(vendorProfilesTable.userId, authReq.user!.userId))
+    .limit(1);
+
+  if (!existingProfile) {
+    res.status(404).json({ message: "Vendor profile not found" });
+    return;
+  }
+
   const shouldStartTrial = startFreeTrial === true || activateSubscription === true;
+  if (shouldStartTrial && (existingProfile.trialStartedAt || existingProfile.trialEndsAt)) {
+    res.status(400).json({ message: "Your free month has already been used." });
+    return;
+  }
+
   const trialWindow = shouldStartTrial ? getTrialWindow() : {};
-  const subscriptionStatus = shouldStartTrial ? "trialing" : "inactive";
+  const subscriptionStatus = shouldStartTrial ? "trialing" : existingProfile.subscriptionStatus;
 
   const [vp] = await db
     .update(vendorProfilesTable)
@@ -237,7 +262,7 @@ router.post("/onboarding", requireVendorAuth, async (req, res): Promise<void> =>
       galleryPhotos: JSON.stringify(galleryPhotos ?? []),
       startingPrice,
       packages: JSON.stringify(packages ?? []),
-      isActive: true,
+      isActive: shouldStartTrial ? true : existingProfile.isActive,
       subscriptionStatus,
       ...trialWindow,
       onboardingComplete: true,
@@ -290,6 +315,22 @@ router.get("/vendor-stats", requireVendorAuth, async (req, res): Promise<void> =
 
 router.post("/subscription/activate", requireVendorAuth, async (req, res): Promise<void> => {
   const authReq = req as AuthenticatedRequest;
+  const [existingProfile] = await db
+    .select()
+    .from(vendorProfilesTable)
+    .where(eq(vendorProfilesTable.userId, authReq.user!.userId))
+    .limit(1);
+
+  if (!existingProfile) {
+    res.status(404).json({ message: "Vendor profile not found" });
+    return;
+  }
+
+  if (existingProfile.trialStartedAt || existingProfile.trialEndsAt) {
+    res.status(400).json({ message: "Your free month has already been used." });
+    return;
+  }
+
   const trialWindow = getTrialWindow();
   // TODO: Wire this endpoint to Stripe Checkout before collecting payment or
   // marking vendors active through a real paid subscription.
@@ -322,9 +363,28 @@ router.post("/subscription/social-promo", requireVendorAuth, async (req, res): P
   const cleanPlatform = typeof platform === "string" ? platform.trim().slice(0, 80) : "";
   const cleanHandle = typeof handle === "string" ? handle.trim().slice(0, 120) : "";
   const cleanProofUrl = typeof proofUrl === "string" ? proofUrl.trim().slice(0, 500) : "";
+  const normalizedPlatform = cleanPlatform.toLowerCase();
+  const proofUrlIsValid = (() => {
+    try {
+      const parsedUrl = new URL(cleanProofUrl);
+      return parsedUrl.protocol === "https:" || parsedUrl.protocol === "http:";
+    } catch {
+      return false;
+    }
+  })();
 
   if (!cleanPlatform || !cleanHandle || !cleanProofUrl) {
     res.status(400).json({ message: "Platform, handle, and proof link are required." });
+    return;
+  }
+
+  if (!supportedSocialPromoPlatforms.has(normalizedPlatform)) {
+    res.status(400).json({ message: "Use Instagram, TikTok, Facebook, LinkedIn, Twitter, or X." });
+    return;
+  }
+
+  if (!proofUrlIsValid) {
+    res.status(400).json({ message: "Proof must be a valid link to your story, post, or uploaded screenshot." });
     return;
   }
 
@@ -339,7 +399,17 @@ router.post("/subscription/social-promo", requireVendorAuth, async (req, res): P
     return;
   }
 
-  if (existing.socialPromoStatus === "approved") {
+  if (existing.subscriptionStatus === "inactive") {
+    res.status(400).json({ message: "Start your free month before submitting a bonus month request." });
+    return;
+  }
+
+  if (existing.socialPromoStatus === "pending") {
+    res.status(400).json({ message: "Your bonus month request is already under review." });
+    return;
+  }
+
+  if (existing.socialPromoStatus === "approved" || existing.bonusTrialEndsAt) {
     res.status(400).json({ message: "Your bonus month has already been approved." });
     return;
   }
@@ -348,7 +418,7 @@ router.post("/subscription/social-promo", requireVendorAuth, async (req, res): P
     .update(vendorProfilesTable)
     .set({
       socialPromoStatus: "pending",
-      socialPromoPlatform: cleanPlatform,
+      socialPromoPlatform: normalizedPlatform,
       socialPromoHandle: cleanHandle,
       socialPromoProofUrl: cleanProofUrl,
       socialPromoSubmittedAt: new Date(),
