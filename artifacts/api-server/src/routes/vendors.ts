@@ -6,7 +6,6 @@ import { requireAuth, requireVendorAuth, type AuthenticatedRequest } from "../li
 import { ListVendorsQueryParams, UpdateMyVendorProfileBody, CompleteOnboardingBody } from "@workspace/api-zod";
 import {
   formatVendorSubscriptionFields,
-  getFreeTrialEndDate,
   isVendorLive,
   normalizeVendorSubscription,
 } from "../lib/vendor-subscription";
@@ -15,11 +14,6 @@ import { seededDemoVendorNames } from "../lib/demo-data-cleanup";
 const router: IRouter = Router();
 const hiddenSeededDemoCartNames = new Set(seededDemoVendorNames);
 const supportedSocialPromoPlatforms = new Set(["instagram", "tiktok", "facebook", "linkedin", "twitter", "x"]);
-
-function getTrialWindow(now = new Date()) {
-  const trialEndsAt = getFreeTrialEndDate(now);
-  return { trialStartedAt: now, trialEndsAt };
-}
 
 function parseVendorProfile(vp: typeof vendorProfilesTable.$inferSelect) {
   return {
@@ -229,7 +223,7 @@ router.post("/onboarding", requireVendorAuth, async (req, res): Promise<void> =>
     return;
   }
 
-  const { cartName, category, bio, city, coverPhoto, galleryPhotos, startingPrice, packages, activateSubscription, startFreeTrial } = parsed.data;
+  const { cartName, category, bio, city, coverPhoto, galleryPhotos, startingPrice, packages } = parsed.data;
 
   const [existingProfile] = await db
     .select()
@@ -242,15 +236,6 @@ router.post("/onboarding", requireVendorAuth, async (req, res): Promise<void> =>
     return;
   }
 
-  const shouldStartTrial = startFreeTrial === true || activateSubscription === true;
-  if (shouldStartTrial && (existingProfile.trialStartedAt || existingProfile.trialEndsAt)) {
-    res.status(400).json({ message: "Your free month has already been used." });
-    return;
-  }
-
-  const trialWindow = shouldStartTrial ? getTrialWindow() : {};
-  const subscriptionStatus = shouldStartTrial ? "trialing" : existingProfile.subscriptionStatus;
-
   const [vp] = await db
     .update(vendorProfilesTable)
     .set({
@@ -262,9 +247,8 @@ router.post("/onboarding", requireVendorAuth, async (req, res): Promise<void> =>
       galleryPhotos: JSON.stringify(galleryPhotos ?? []),
       startingPrice,
       packages: JSON.stringify(packages ?? []),
-      isActive: shouldStartTrial ? true : existingProfile.isActive,
-      subscriptionStatus,
-      ...trialWindow,
+      isActive: existingProfile.isActive,
+      subscriptionStatus: existingProfile.subscriptionStatus,
       onboardingComplete: true,
     })
     .where(eq(vendorProfilesTable.userId, authReq.user!.userId))
@@ -314,42 +298,7 @@ router.get("/vendor-stats", requireVendorAuth, async (req, res): Promise<void> =
 });
 
 router.post("/subscription/activate", requireVendorAuth, async (req, res): Promise<void> => {
-  const authReq = req as AuthenticatedRequest;
-  const [existingProfile] = await db
-    .select()
-    .from(vendorProfilesTable)
-    .where(eq(vendorProfilesTable.userId, authReq.user!.userId))
-    .limit(1);
-
-  if (!existingProfile) {
-    res.status(404).json({ message: "Vendor profile not found" });
-    return;
-  }
-
-  if (existingProfile.trialStartedAt || existingProfile.trialEndsAt) {
-    res.status(400).json({ message: "Your free month has already been used." });
-    return;
-  }
-
-  const trialWindow = getTrialWindow();
-  // TODO: Wire this endpoint to Stripe Checkout before collecting payment or
-  // marking vendors active through a real paid subscription.
-  const [vp] = await db
-    .update(vendorProfilesTable)
-    .set({
-      subscriptionStatus: "trialing",
-      isActive: true,
-      ...trialWindow,
-    })
-    .where(eq(vendorProfilesTable.userId, authReq.user!.userId))
-    .returning();
-
-  if (!vp) {
-    res.status(404).json({ message: "Vendor profile not found" });
-    return;
-  }
-
-  res.json({ success: true, subscriptionStatus: "trialing", trialEndsAt: vp.trialEndsAt?.toISOString() });
+  res.status(410).json({ message: "Use Stripe Checkout to start your free month." });
 });
 
 router.post("/subscription/social-promo", requireVendorAuth, async (req, res): Promise<void> => {

@@ -27,7 +27,7 @@ export default function Onboarding() {
     bio: "",
     startingPrice: "",
     packages: [{ name: "Standard Package", price: "500", description: "2 hours of service for up to 50 guests." }],
-    coverPhoto: "https://images.unsplash.com/photo-1556742044-3c52d6e88c62?q=80&w=1000&auto=format&fit=crop", // Using unsplash as a placeholder for the demo to bypass file upload complexity in this env
+    coverPhoto: "",
   });
 
   const [isCompleted, setIsCompleted] = useState(false);
@@ -70,7 +70,6 @@ export default function Onboarding() {
           startingPrice: Number(formData.startingPrice),
           packages: formData.packages.map(p => ({ ...p, price: Number(p.price) })),
           coverPhoto: formData.coverPhoto,
-          startFreeTrial: true
         } 
       },
       {
@@ -85,7 +84,7 @@ export default function Onboarding() {
           
           setTimeout(() => {
             setLocation("/dashboard/vendor");
-          }, 3000);
+          }, 2000);
         },
         onError: (err) => {
           toast.error(getApiErrorMessage(err, "Failed to complete setup"));
@@ -150,7 +149,7 @@ export default function Onboarding() {
             <CheckCircle2 className="w-12 h-12 text-primary" />
           </div>
           <h1 className="text-4xl font-serif font-bold mb-4">You're All Set!</h1>
-          <p className="text-xl text-muted-foreground mb-8">Your free month has started, and customers can now find your cart.</p>
+          <p className="text-xl text-muted-foreground mb-8">Your profile is saved. Start your free month from the dashboard to publish your cart.</p>
           <p className="text-sm text-muted-foreground animate-pulse">Redirecting to your dashboard...</p>
         </div>
       </PageTransition>
@@ -282,9 +281,11 @@ export default function Onboarding() {
                     placeholder="https://example.com/your-cart-photo.jpg"
                   />
                   
-                  <div className="relative w-full max-w-md aspect-video rounded-xl overflow-hidden border border-border">
-                    <img src={formData.coverPhoto} alt="Cover preview" className="w-full h-full object-cover" />
-                  </div>
+                  {formData.coverPhoto && (
+                    <div className="relative w-full max-w-md aspect-video rounded-xl overflow-hidden border border-border">
+                      <img src={formData.coverPhoto} alt="Cover preview" className="w-full h-full object-cover" />
+                    </div>
+                  )}
                 </div>
               </motion.div>
             )}
@@ -374,9 +375,9 @@ export default function Onboarding() {
                 <div className="w-20 h-20 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-6">
                   <Rocket className="w-10 h-10 text-secondary" />
                 </div>
-                <h2 className="text-3xl font-serif font-bold mb-4">Ready to show your cart?</h2>
+                <h2 className="text-3xl font-serif font-bold mb-4">Ready to save your profile?</h2>
                 <p className="text-muted-foreground text-lg max-w-md mx-auto mb-8">
-                  Your profile looks great. Start your free month of Vended Pro and begin receiving booking requests.
+                  Save your cart details now, then start your free month with Stripe Checkout from your dashboard.
                 </p>
                 
                 <div className="bg-card border-2 border-primary rounded-3xl p-8 max-w-sm mx-auto cartly-shadow relative overflow-hidden">
@@ -419,9 +420,9 @@ export default function Onboarding() {
                 className="bg-secondary hover:bg-secondary/90 text-secondary-foreground px-8 rounded-xl h-12 text-lg shadow-md"
               >
                 {completeOnboarding.isPending ? (
-                  <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Starting free month...</>
+                  <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Saving profile...</>
                 ) : (
-                  "Start my free month"
+                  "Save profile"
                 )}
               </Button>
             )}
