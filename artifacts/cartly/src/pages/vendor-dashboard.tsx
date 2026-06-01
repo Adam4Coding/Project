@@ -74,7 +74,7 @@ function formatTrialEnd(date?: string) {
 
 export default function VendorDashboard() {
   const [, setLocation] = useLocation();
-  const { isAuthenticated, user, vendorProfile, token } = useAuth();
+  const { isAuthenticated, isLoading: isLoadingAuth, user, vendorProfile, token } = useAuth();
   const queryClient = useQueryClient();
   
   const [declineBookingId, setDeclineBookingId] = useState<number | null>(null);
@@ -85,6 +85,7 @@ export default function VendorDashboard() {
   const [isSubmittingPromo, setIsSubmittingPromo] = useState(false);
   const [isOpeningCheckout, setIsOpeningCheckout] = useState(false);
   const [isOpeningBillingPortal, setIsOpeningBillingPortal] = useState(false);
+  const [hasHandledCheckoutReturn, setHasHandledCheckoutReturn] = useState(false);
 
   const { data: statsData, isLoading: isLoadingStats } = useGetVendorStats(
     { query: { enabled: isAuthenticated && user?.role === "vendor", queryKey: getGetVendorStatsQueryKey() } }
@@ -123,6 +124,60 @@ export default function VendorDashboard() {
       });
     }
   }, [profileData, form]);
+
+  useEffect(() => {
+    if (!isAuthenticated || user?.role !== "vendor" || !token || hasHandledCheckoutReturn) {
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const checkoutStatus = params.get("checkout");
+    const sessionId = params.get("session_id");
+
+    if (checkoutStatus === "cancelled") {
+      setHasHandledCheckoutReturn(true);
+      toast.info("Stripe Checkout was cancelled. You can start your free month whenever you're ready.");
+      window.history.replaceState({}, "", "/dashboard/vendor");
+      return;
+    }
+
+    if (checkoutStatus !== "success" || !sessionId) {
+      return;
+    }
+
+    setHasHandledCheckoutReturn(true);
+    fetch("/api/subscription/reconcile", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ sessionId }),
+    })
+      .then(async (response) => {
+        const data = await response.json().catch(() => null);
+        if (!response.ok) {
+          throw new Error(data?.message || "Could not confirm your Stripe Checkout yet.");
+        }
+        toast.success("Your free month is active. Your cart is now live.");
+        queryClient.invalidateQueries({ queryKey: getGetMyVendorProfileQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getGetVendorStatsQueryKey() });
+      })
+      .catch((err) => {
+        toast.error(err instanceof Error ? err.message : "Could not confirm your Stripe Checkout yet.");
+      })
+      .finally(() => {
+        window.history.replaceState({}, "", "/dashboard/vendor");
+      });
+  }, [hasHandledCheckoutReturn, isAuthenticated, queryClient, token, user?.role]);
+
+  if (isLoadingAuth) {
+    return (
+      <PageTransition className="flex-1 bg-muted/20 py-8">
+        <div className="container mx-auto px-4 max-w-6xl text-muted-foreground">Loading your dashboard...</div>
+      </PageTransition>
+    );
+  }
 
   if (!isAuthenticated || user?.role !== "vendor") {
     setLocation("/login");

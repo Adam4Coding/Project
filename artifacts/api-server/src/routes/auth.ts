@@ -31,6 +31,11 @@ router.post("/auth/signup", async (req, res): Promise<void> => {
   }
   const { email, password, name, role, cartName, category, city } = parsed.data;
 
+  if (role === "vendor" && (!cartName?.trim() || !category?.trim() || !city?.trim())) {
+    res.status(400).json({ message: "Cart name, category, and city are required for vendor accounts." });
+    return;
+  }
+
   const existing = await db.select().from(usersTable).where(eq(usersTable.email, email)).limit(1);
   if (existing.length > 0) {
     res.status(400).json({ message: "Email already in use" });

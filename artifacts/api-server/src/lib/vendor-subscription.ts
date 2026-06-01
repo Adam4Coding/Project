@@ -54,8 +54,29 @@ export async function normalizeVendorSubscription(vp: VendorProfileRecord) {
     return vp;
   }
 
-  // TODO: Replace this app-level expiration with Stripe subscription webhooks.
-  // Without real billing, an expired trial should not be promoted to paid/active.
+  const stripe = getStripe();
+  if (stripe && vp.stripeSubscriptionId) {
+    const subscription = await stripe.subscriptions.retrieve(vp.stripeSubscriptionId);
+    const subscriptionStatus =
+      subscription.status === "active" ? "active" : subscription.status === "trialing" ? "trialing" : "inactive";
+    const trialStartedAt = subscription.trial_start ? new Date(subscription.trial_start * 1000) : null;
+    const trialEndsAt = subscription.trial_end ? new Date(subscription.trial_end * 1000) : null;
+
+    const [updated] = await db
+      .update(vendorProfilesTable)
+      .set({
+        subscriptionStatus,
+        isActive: subscriptionStatus !== "inactive",
+        trialStartedAt,
+        trialEndsAt,
+      })
+      .where(eq(vendorProfilesTable.id, vp.id))
+      .returning();
+
+    return updated ?? vp;
+  }
+
+  // Legacy safeguard for vendors that somehow had a trial without Stripe.
   const [updated] = await db
     .update(vendorProfilesTable)
     .set({

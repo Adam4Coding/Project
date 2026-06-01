@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { setAuthTokenGetter } from "@workspace/api-client-react";
+import { getMe, setAuthTokenGetter } from "@workspace/api-client-react";
 import type { UserProfile, VendorSummary } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
 
@@ -18,6 +18,26 @@ interface AuthContextType extends AuthState {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AUTH_STORAGE_KEY = "vended.auth";
+
+type StoredAuthState = Pick<AuthState, "token" | "user" | "vendorProfile">;
+
+function readStoredAuth(): StoredAuthState | null {
+  try {
+    const raw = window.localStorage.getItem(AUTH_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as StoredAuthState) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredAuth(auth: StoredAuthState) {
+  window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(auth));
+}
+
+function clearStoredAuth() {
+  window.localStorage.removeItem(AUTH_STORAGE_KEY);
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [, setLocation] = useLocation();
@@ -30,16 +50,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   useEffect(() => {
-    // Since token is context only, we just set loading to false immediately.
-    setState(s => ({ ...s, isLoading: false }));
-    
-    // Configure the api-client to use our token
     setAuthTokenGetter(() => {
-      // In a real app we'd use a ref or something to get the latest token, 
-      // but here we can just return the token from state if it's accessible, 
-      // wait, `setAuthTokenGetter` takes a function. We need a ref to the latest token.
       return currentToken;
     });
+
+    const stored = readStoredAuth();
+    if (!stored?.token || !stored.user) {
+      setState(s => ({ ...s, isLoading: false }));
+      return;
+    }
+
+    currentToken = stored.token;
+    setState({
+      user: stored.user,
+      token: stored.token,
+      vendorProfile: stored.vendorProfile,
+      isAuthenticated: true,
+      isLoading: true,
+    });
+
+    getMe()
+      .then((res) => {
+        writeStoredAuth({ token: stored.token, user: res.user, vendorProfile: res.vendorProfile });
+        setState({
+          user: res.user,
+          token: stored.token,
+          vendorProfile: res.vendorProfile,
+          isAuthenticated: true,
+          isLoading: false,
+        });
+      })
+      .catch(() => {
+        currentToken = null;
+        clearStoredAuth();
+        setState({
+          user: null,
+          token: null,
+          vendorProfile: undefined,
+          isAuthenticated: false,
+          isLoading: false,
+        });
+      });
   }, []);
 
   // Use a global variable or ref to keep the token available to the getter
@@ -48,6 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [state.token]);
 
   const login = (token: string, user: UserProfile, vendorProfile?: VendorSummary) => {
+    writeStoredAuth({ token, user, vendorProfile });
     setState({
       user,
       token,
@@ -58,6 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    clearStoredAuth();
     setState({
       user: null,
       token: null,
@@ -73,6 +126,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ...s,
       vendorProfile: profile,
     }));
+    if (state.token && state.user) {
+      writeStoredAuth({ token: state.token, user: state.user, vendorProfile: profile });
+    }
   };
 
   return (

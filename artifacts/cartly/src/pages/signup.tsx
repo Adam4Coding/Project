@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useSearch, Link } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -69,6 +69,12 @@ export default function Signup() {
       city: "",
     },
   });
+
+  useEffect(() => {
+    const nextRole = new URLSearchParams(search).get("role") === "vendor" ? "vendor" : "customer";
+    setRole(nextRole);
+    form.setValue("role", nextRole);
+  }, [form, search]);
 
   const onSubmit = async (data: SignupFormValues) => {
     signupMutation.mutate(
