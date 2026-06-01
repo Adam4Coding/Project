@@ -227,7 +227,7 @@ export default function Home() {
           <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">Run a specialty cart?</h2>
           <p className="text-primary-foreground/80 text-lg mb-8 max-w-xl mx-auto">Join Vended early and give event hosts a polished way to find and request your cart.</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/signup">
+            <Link href="/signup?role=vendor">
               <Button size="lg" className="rounded-full bg-white text-primary hover:bg-white/90 font-semibold px-8 h-12">
                 List your cart — it's free
               </Button>

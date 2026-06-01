@@ -34,7 +34,7 @@ export function Footer() {
           <div>
             <h4 className="font-serif font-semibold mb-4">For Vendors</h4>
             <ul className="space-y-3 text-sm text-muted-foreground">
-              <li><Link href="/signup" className="hover:text-primary transition-colors">List Your Cart</Link></li>
+              <li><Link href="/signup?role=vendor" className="hover:text-primary transition-colors">List Your Cart</Link></li>
               <li><Link href="/login" className="hover:text-primary transition-colors">Vendor Login</Link></li>
               <li><a href="#" className="hover:text-primary transition-colors">Success Stories</a></li>
               <li><a href="#" className="hover:text-primary transition-colors">Pricing</a></li>
@@ -61,4 +61,3 @@ export function Footer() {
     </footer>
   );
 }
-

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation, Link } from "wouter";
+import { useLocation, useSearch, Link } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -51,9 +51,11 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 
 export default function Signup() {
   const [, setLocation] = useLocation();
+  const search = useSearch();
   const { login } = useAuth();
   const signupMutation = useSignup();
-  const [role, setRole] = useState<"customer" | "vendor">("customer");
+  const initialRole = new URLSearchParams(search).get("role") === "vendor" ? "vendor" : "customer";
+  const [role, setRole] = useState<"customer" | "vendor">(initialRole);
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
@@ -61,7 +63,7 @@ export default function Signup() {
       name: "",
       email: "",
       password: "",
-      role: "customer",
+      role: initialRole,
       cartName: "",
       category: "",
       city: "",
