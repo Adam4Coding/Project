@@ -1,5 +1,6 @@
 import { db, vendorProfilesTable } from "@workspace/db";
 import { and, eq, sql } from "drizzle-orm";
+import { getStripe } from "./stripe";
 
 export const VENDOR_PLAN_PRICE_MONTHLY = 29;
 export const VENDOR_FREE_TRIAL_DAYS = 30;
@@ -19,7 +20,9 @@ export async function ensureVendorSubscriptionSchema() {
       ADD COLUMN IF NOT EXISTS social_promo_proof_url text NOT NULL DEFAULT '',
       ADD COLUMN IF NOT EXISTS social_promo_submitted_at timestamp with time zone,
       ADD COLUMN IF NOT EXISTS social_promo_approved_at timestamp with time zone,
-      ADD COLUMN IF NOT EXISTS bonus_trial_ends_at timestamp with time zone
+      ADD COLUMN IF NOT EXISTS bonus_trial_ends_at timestamp with time zone,
+      ADD COLUMN IF NOT EXISTS stripe_customer_id text NOT NULL DEFAULT '',
+      ADD COLUMN IF NOT EXISTS stripe_subscription_id text NOT NULL DEFAULT ''
   `);
 }
 
@@ -106,6 +109,12 @@ export async function processPendingSocialPromoBonuses(now = new Date()) {
       .returning();
 
     if (updated) {
+      const stripe = getStripe();
+      if (stripe && updated.stripeSubscriptionId) {
+        await stripe.subscriptions.update(updated.stripeSubscriptionId, {
+          trial_end: Math.floor(bonusTrialEndsAt.getTime() / 1000),
+        });
+      }
       approved.push(updated);
     }
   }
@@ -126,5 +135,7 @@ export function formatVendorSubscriptionFields(vp: VendorProfileRecord) {
     socialPromoSubmittedAt: vp.socialPromoSubmittedAt?.toISOString(),
     socialPromoApprovedAt: vp.socialPromoApprovedAt?.toISOString(),
     bonusTrialEndsAt: vp.bonusTrialEndsAt?.toISOString(),
+    stripeCustomerId: vp.stripeCustomerId,
+    stripeSubscriptionId: vp.stripeSubscriptionId,
   };
 }

@@ -24,6 +24,8 @@ export const vendorProfilesTable = pgTable("vendor_profiles", {
   socialPromoSubmittedAt: timestamp("social_promo_submitted_at", { withTimezone: true }),
   socialPromoApprovedAt: timestamp("social_promo_approved_at", { withTimezone: true }),
   bonusTrialEndsAt: timestamp("bonus_trial_ends_at", { withTimezone: true }),
+  stripeCustomerId: text("stripe_customer_id").notNull().default(""),
+  stripeSubscriptionId: text("stripe_subscription_id").notNull().default(""),
   avgRating: real("avg_rating").notNull().default(0),
   profileViews: integer("profile_views").notNull().default(0),
   onboardingComplete: boolean("onboarding_complete").notNull().default(false),

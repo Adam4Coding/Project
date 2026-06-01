@@ -18,7 +18,6 @@ import {
   useRespondToBooking, 
   useGetMyVendorProfile, 
   useUpdateMyVendorProfile, 
-  useActivateSubscription,
   getGetBookingRequestsQueryKey,
   getGetVendorStatsQueryKey,
   getGetMyVendorProfileQueryKey
@@ -84,6 +83,8 @@ export default function VendorDashboard() {
   const [promoHandle, setPromoHandle] = useState("");
   const [promoProofUrl, setPromoProofUrl] = useState("");
   const [isSubmittingPromo, setIsSubmittingPromo] = useState(false);
+  const [isOpeningCheckout, setIsOpeningCheckout] = useState(false);
+  const [isOpeningBillingPortal, setIsOpeningBillingPortal] = useState(false);
 
   const { data: statsData, isLoading: isLoadingStats } = useGetVendorStats(
     { query: { enabled: isAuthenticated && user?.role === "vendor", queryKey: getGetVendorStatsQueryKey() } }
@@ -99,7 +100,6 @@ export default function VendorDashboard() {
 
   const respondToBooking = useRespondToBooking();
   const updateProfile = useUpdateMyVendorProfile();
-  const activateSubscription = useActivateSubscription();
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -169,18 +169,57 @@ export default function VendorDashboard() {
   };
 
   const handleActivateSub = () => {
-    activateSubscription.mutate(
-      undefined as any,
-      {
-        onSuccess: () => {
-          toast.success("Your free month has started. Customers can now find your cart.");
-          queryClient.invalidateQueries({ queryKey: getGetMyVendorProfileQueryKey() });
-        },
-        onError: (err) => {
-          toast.error(getApiErrorMessage(err, "Could not start your free month"));
-        },
-      }
-    );
+    setIsOpeningCheckout(true);
+    fetch("/api/subscription/checkout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    })
+      .then(async (response) => {
+        const data = await response.json().catch(() => null);
+        if (!response.ok) {
+          throw new Error(data?.message || "Could not open Stripe Checkout");
+        }
+        if (!data?.url) {
+          throw new Error("Stripe Checkout did not return a checkout link.");
+        }
+        window.location.assign(data.url);
+      })
+      .catch((err) => {
+        toast.error(err instanceof Error ? err.message : "Could not open Stripe Checkout");
+      })
+      .finally(() => {
+        setIsOpeningCheckout(false);
+      });
+  };
+
+  const handleOpenBillingPortal = () => {
+    setIsOpeningBillingPortal(true);
+    fetch("/api/subscription/portal", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    })
+      .then(async (response) => {
+        const data = await response.json().catch(() => null);
+        if (!response.ok) {
+          throw new Error(data?.message || "Could not open billing settings");
+        }
+        if (!data?.url) {
+          throw new Error("Stripe did not return a billing link.");
+        }
+        window.location.assign(data.url);
+      })
+      .catch((err) => {
+        toast.error(err instanceof Error ? err.message : "Could not open billing settings");
+      })
+      .finally(() => {
+        setIsOpeningBillingPortal(false);
+      });
   };
 
   const handleSubmitSocialPromo = async () => {
@@ -227,6 +266,7 @@ export default function VendorDashboard() {
   const trialEndsAt = profileData?.vendor?.trialEndsAt;
   const hasUsedFreeTrial = Boolean(profileData?.vendor?.trialStartedAt || trialEndsAt);
   const canStartFreeTrial = isFreeProfile && !hasUsedFreeTrial;
+  const hasStripeSubscription = Boolean((profileData?.vendor as { stripeSubscriptionId?: string } | undefined)?.stripeSubscriptionId);
   const promoStatus = (profileData?.vendor as { socialPromoStatus?: string } | undefined)?.socialPromoStatus ?? "none";
   const promoSubmittedAt = (profileData?.vendor as { socialPromoSubmittedAt?: string } | undefined)?.socialPromoSubmittedAt;
   const bonusTrialEndsAt = (profileData?.vendor as { bonusTrialEndsAt?: string } | undefined)?.bonusTrialEndsAt;
@@ -247,8 +287,8 @@ export default function VendorDashboard() {
                   : "Your free month has ended, so your cart is hidden until Stripe billing is connected."}
               </span>
               {canStartFreeTrial ? (
-                <Button size="sm" onClick={handleActivateSub} disabled={activateSubscription.isPending} className="bg-amber-600 hover:bg-amber-700 text-white shrink-0">
-                  {activateSubscription.isPending ? "Starting..." : "Start my free month"}
+                <Button size="sm" onClick={handleActivateSub} disabled={isOpeningCheckout} className="bg-amber-600 hover:bg-amber-700 text-white shrink-0">
+                  {isOpeningCheckout ? "Opening Stripe..." : "Start my free month"}
                 </Button>
               ) : (
                 <span className="text-sm font-medium">Stripe setup is needed to turn your cart back on after the free month.</span>
@@ -549,8 +589,12 @@ export default function VendorDashboard() {
                 </ul>
                 
                 {canStartFreeTrial ? (
-                  <Button onClick={handleActivateSub} disabled={activateSubscription.isPending} className="w-full h-12 text-lg bg-primary hover:bg-primary/90">
-                    {activateSubscription.isPending ? "Starting..." : "Start my free month"}
+                  <Button onClick={handleActivateSub} disabled={isOpeningCheckout} className="w-full h-12 text-lg bg-primary hover:bg-primary/90">
+                    {isOpeningCheckout ? "Opening Stripe..." : "Start my free month"}
+                  </Button>
+                ) : hasStripeSubscription ? (
+                  <Button onClick={handleOpenBillingPortal} variant="outline" disabled={isOpeningBillingPortal} className="w-full">
+                    {isOpeningBillingPortal ? "Opening billing..." : "Manage billing"}
                   </Button>
                 ) : isFreeProfile ? (
                   <Button variant="outline" className="w-full" disabled>
