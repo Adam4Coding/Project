@@ -343,7 +343,7 @@ export default function VendorDashboard() {
               </span>
               {canStartFreeTrial ? (
                 <Button size="sm" onClick={handleActivateSub} disabled={isOpeningCheckout} className="bg-amber-600 hover:bg-amber-700 text-white shrink-0">
-                  {isOpeningCheckout ? "Opening Stripe..." : "Start my free month"}
+                {isOpeningCheckout ? "Opening Stripe..." : "Start 30-day free trial"}
                 </Button>
               ) : (
                 <span className="text-sm font-medium">Stripe setup is needed to turn your cart back on after the free month.</span>
@@ -645,7 +645,7 @@ export default function VendorDashboard() {
                 
                 {canStartFreeTrial ? (
                   <Button onClick={handleActivateSub} disabled={isOpeningCheckout} className="w-full h-12 text-lg bg-primary hover:bg-primary/90">
-                    {isOpeningCheckout ? "Opening Stripe..." : "Start my free month"}
+                    {isOpeningCheckout ? "Opening Stripe..." : "Start 30-day free trial"}
                   </Button>
                 ) : hasStripeSubscription ? (
                   <Button onClick={handleOpenBillingPortal} variant="outline" disabled={isOpeningBillingPortal} className="w-full">

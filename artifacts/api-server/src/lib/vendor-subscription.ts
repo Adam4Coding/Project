@@ -109,7 +109,18 @@ export async function processPendingSocialPromoBonuses(now = new Date()) {
 
   const approved = [];
   for (const vp of readyForApproval) {
+    if (!vp.stripeSubscriptionId) {
+      continue;
+    }
+
     const bonusTrialEndsAt = getBonusTrialEndDate(vp.trialEndsAt, now);
+    const stripe = getStripe();
+    if (stripe) {
+      await stripe.subscriptions.update(vp.stripeSubscriptionId, {
+        trial_end: Math.floor(bonusTrialEndsAt.getTime() / 1000),
+      });
+    }
+
     const [updated] = await db
       .update(vendorProfilesTable)
       .set({
@@ -130,12 +141,6 @@ export async function processPendingSocialPromoBonuses(now = new Date()) {
       .returning();
 
     if (updated) {
-      const stripe = getStripe();
-      if (stripe && updated.stripeSubscriptionId) {
-        await stripe.subscriptions.update(updated.stripeSubscriptionId, {
-          trial_end: Math.floor(bonusTrialEndsAt.getTime() / 1000),
-        });
-      }
       approved.push(updated);
     }
   }
