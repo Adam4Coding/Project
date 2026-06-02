@@ -193,7 +193,7 @@ export default function Signup() {
                     <FormItem>
                       <FormLabel>Cart Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Jane's Matcha Bar" {...field} className="h-11 bg-background" />
+                        <Input placeholder="Jane's Espresso Cart" {...field} className="h-11 bg-background" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -207,7 +207,7 @@ export default function Signup() {
                       <FormItem>
                         <FormLabel>Primary Category</FormLabel>
                         <FormControl>
-                          <Input placeholder="Matcha, Espresso..." {...field} className="h-11 bg-background" />
+                          <Input placeholder="Espresso, Mocktails..." {...field} className="h-11 bg-background" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

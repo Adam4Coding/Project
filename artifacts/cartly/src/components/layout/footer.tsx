@@ -36,18 +36,18 @@ export function Footer() {
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li><Link href="/signup?role=vendor" className="hover:text-primary transition-colors">List Your Cart</Link></li>
               <li><Link href="/login" className="hover:text-primary transition-colors">Vendor Login</Link></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Success Stories</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Pricing</a></li>
+              <li><a href="/#vendors" className="hover:text-primary transition-colors">Vendor Trial</a></li>
+              <li><a href="/#vendors" className="hover:text-primary transition-colors">Pricing</a></li>
             </ul>
           </div>
           
           <div>
             <h4 className="font-serif font-semibold mb-4">Support</h4>
             <ul className="space-y-3 text-sm text-muted-foreground">
-              <li><a href="#" className="hover:text-primary transition-colors">Help Center</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Trust & Safety</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Terms of Service</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Privacy Policy</a></li>
+              <li><a href="mailto:info@tryvended.com" className="hover:text-primary transition-colors">Contact Support</a></li>
+              <li><a href="mailto:info@tryvended.com?subject=Trust%20%26%20Safety" className="hover:text-primary transition-colors">Trust & Safety</a></li>
+              <li><a href="mailto:info@tryvended.com?subject=Terms%20of%20Service" className="hover:text-primary transition-colors">Terms of Service</a></li>
+              <li><a href="mailto:info@tryvended.com?subject=Privacy%20Policy" className="hover:text-primary transition-colors">Privacy Policy</a></li>
             </ul>
           </div>
         </div>

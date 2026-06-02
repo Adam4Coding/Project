@@ -47,7 +47,7 @@ export default function Home() {
               <span className="text-primary italic font-normal">everyone's talking about</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              From artisanal matcha bars to late-night churros, discover and book specialty carts for your next event, party, or pop-up.
+              Discover and book specialty carts for weddings, parties, brand pop-ups, and private events.
             </p>
             
             <form onSubmit={handleSearch} className="flex flex-col md:flex-row items-center gap-3 max-w-3xl mx-auto bg-card p-3 rounded-3xl md:rounded-full cartly-shadow border border-border/50 mb-10">
@@ -64,7 +64,7 @@ export default function Home() {
               <div className="relative w-full md:flex-1 flex items-center bg-muted/30 rounded-full px-4 py-2 border border-transparent focus-within:border-primary/30 focus-within:bg-background transition-colors">
                 <Search className="text-muted-foreground h-5 w-5 mr-3 shrink-0" />
                 <Input 
-                  placeholder="Cart type (e.g. Matcha)" 
+                  placeholder="Cart type (e.g. Espresso)"
                   className="border-none shadow-none focus-visible:ring-0 px-0 h-10 bg-transparent text-base"
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
@@ -89,7 +89,7 @@ export default function Home() {
               <div className="hidden md:block w-px h-4 bg-border"></div>
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-primary" />
-                <span><strong className="text-foreground font-semibold">First month free</strong> for early vendors</span>
+                <span><strong className="text-foreground font-semibold">30-day free trial</strong> for early vendors</span>
               </div>
             </div>
           </div>
@@ -222,14 +222,14 @@ export default function Home() {
       </section>
 
       {/* CTA for vendors */}
-      <section className="py-20 bg-primary text-primary-foreground">
+      <section id="vendors" className="py-20 bg-primary text-primary-foreground">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">Run a specialty cart?</h2>
-          <p className="text-primary-foreground/80 text-lg mb-8 max-w-xl mx-auto">Join Vended early and give event hosts a polished way to find and request your cart.</p>
+          <p className="text-primary-foreground/80 text-lg mb-8 max-w-xl mx-auto">Join Vended early and give event hosts a polished way to find and request your cart. Start with 30 days free, then Vended Pro is $29/month.</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/signup?role=vendor">
               <Button size="lg" className="rounded-full bg-white text-primary hover:bg-white/90 font-semibold px-8 h-12">
-                List your cart — it's free
+                Start your free trial
               </Button>
             </Link>
             <div className="flex items-center gap-6 text-primary-foreground/70 text-sm">
