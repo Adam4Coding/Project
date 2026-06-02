@@ -25,7 +25,7 @@ export function Footer() {
             <h4 className="font-serif font-semibold mb-4">Discover</h4>
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li><Link href="/explore" className="hover:text-primary transition-colors">All Carts</Link></li>
-              <li><Link href="/explore?category=Matcha" className="hover:text-primary transition-colors">Matcha Bars</Link></li>
+              <li><Link href="/explore?category=Coffee" className="hover:text-primary transition-colors">Coffee Carts</Link></li>
               <li><Link href="/explore?category=Espresso" className="hover:text-primary transition-colors">Espresso Carts</Link></li>
               <li><Link href="/explore?category=Mocktails" className="hover:text-primary transition-colors">Mocktail Bars</Link></li>
             </ul>

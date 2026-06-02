@@ -11,7 +11,7 @@ import { SlidersHorizontal, MapPin, Frown, X } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 const CATEGORIES = [
-  { icon: "🍵", name: "Matcha" },
+  { icon: "🛻", name: "Coffee" },
   { icon: "🍹", name: "Mocktails" },
   { icon: "🥐", name: "Churros" },
   { icon: "☕", name: "Espresso" },
@@ -253,4 +253,3 @@ export default function Explore() {
     </PageTransition>
   );
 }
-

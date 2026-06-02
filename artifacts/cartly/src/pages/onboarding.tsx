@@ -225,7 +225,7 @@ export default function Onboarding() {
                       id="category" 
                       value={formData.category} 
                       onChange={e => setFormData({...formData, category: e.target.value})} 
-                      placeholder="e.g. Matcha, Espresso"
+                      placeholder="e.g. Espresso, Mocktails"
                       className="bg-background h-12"
                     />
                   </div>

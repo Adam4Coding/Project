@@ -6,7 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const CATEGORIES = [
-  { icon: "🍵", name: "Matcha" },
+  { icon: "🛻", name: "Coffee" },
   { icon: "🍹", name: "Mocktails" },
   { icon: "🥐", name: "Churros" },
   { icon: "☕", name: "Espresso" },
@@ -149,4 +149,3 @@ export function Navbar() {
     </>
   );
 }
-

@@ -8,7 +8,7 @@ import { VendorCard, VendorCardSkeleton } from "@/components/shared/vendor-card"
 import { useState } from "react";
 
 const CATEGORIES = [
-  { icon: "🍵", name: "Matcha" },
+  { icon: "🛻", name: "Coffee" },
   { icon: "🍹", name: "Mocktails" },
   { icon: "🥐", name: "Churros" },
   { icon: "☕", name: "Espresso" },
