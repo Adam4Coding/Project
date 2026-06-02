@@ -120,8 +120,6 @@ router.post("/subscription/checkout", requireVendorAuth, async (req, res): Promi
       userId: String(user.id),
       vendorProfileId: String(vendorProfile.id),
     },
-  }, {
-    idempotencyKey: `vendor-checkout-${vendorProfile.id}-${priceId}`,
   });
 
   res.json({ url: session.url });
