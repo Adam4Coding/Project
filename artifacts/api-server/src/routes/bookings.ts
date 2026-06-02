@@ -43,6 +43,7 @@ async function enrichBooking(booking: typeof bookingsTable.$inferSelect) {
     vendorNote: booking.vendorNote,
     createdAt: booking.createdAt.toISOString(),
     customerName: customer?.name ?? "Unknown",
+    customerEmail: customer?.email ?? "",
     vendorCartName: vendor?.cartName ?? "Unknown",
     hasReview: existingReview.length > 0,
   };

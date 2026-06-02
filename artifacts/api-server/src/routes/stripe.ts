@@ -71,11 +71,41 @@ router.post("/subscription/checkout", requireVendorAuth, async (req, res): Promi
     return;
   }
 
+  let stripeCustomerId = vendorProfile.stripeCustomerId.trim();
+  if (!stripeCustomerId) {
+    const customer = await stripe.customers.create({
+      email: user.email,
+      name: user.name,
+      metadata: {
+        userId: String(user.id),
+        vendorProfileId: String(vendorProfile.id),
+      },
+    });
+    stripeCustomerId = customer.id;
+    await db
+      .update(vendorProfilesTable)
+      .set({ stripeCustomerId })
+      .where(eq(vendorProfilesTable.id, vendorProfile.id));
+  }
+
+  const openSessions = await stripe.checkout.sessions.list({
+    customer: stripeCustomerId,
+    status: "open",
+    limit: 10,
+  });
+  const existingSession = openSessions.data.find(
+    (session) => session.metadata?.vendorProfileId === String(vendorProfile.id) && session.url,
+  );
+  if (existingSession?.url) {
+    res.json({ url: existingSession.url });
+    return;
+  }
+
   const appUrl = getAppUrl();
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     client_reference_id: String(vendorProfile.id),
-    customer_email: user.email,
+    customer: stripeCustomerId,
     line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${appUrl}/dashboard/vendor?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${appUrl}/dashboard/vendor?checkout=cancelled`,

@@ -431,6 +431,14 @@ export default function VendorDashboard() {
                             {booking.status === "confirmed" && <Badge className="bg-emerald-500/10 text-emerald-600 border-none">Confirmed</Badge>}
                             {booking.status === "declined" && <Badge className="bg-red-500/10 text-red-600 border-none">Declined</Badge>}
                           </div>
+                          {(booking as { customerEmail?: string }).customerEmail && (
+                            <a
+                              href={`mailto:${(booking as { customerEmail?: string }).customerEmail}`}
+                              className="text-sm font-medium text-primary hover:underline mb-4 inline-block"
+                            >
+                              {(booking as { customerEmail?: string }).customerEmail}
+                            </a>
+                          )}
                           
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-sm text-muted-foreground mb-4">
                             <div className="flex items-center gap-2">
