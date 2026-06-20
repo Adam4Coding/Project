@@ -31,7 +31,7 @@ export default function Home() {
     const params = new URLSearchParams();
     if (city) params.append("city", city);
     if (category) params.append("category", category);
-    setLocation(`/explore?${params.toString()}`);
+    setLocation(`/find-a-cart?${params.toString()}&source=homepage-search`);
   };
 
   return (
@@ -47,7 +47,7 @@ export default function Home() {
               <span className="text-primary italic font-normal">everyone's talking about</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Discover and book specialty carts for weddings, parties, brand pop-ups, and private events.
+              Tell us about your Chicago event. We’ll find matching coffee, mocktail, dessert, and food carts for free.
             </p>
             
             <form onSubmit={handleSearch} className="flex flex-col md:flex-row items-center gap-3 max-w-3xl mx-auto bg-card p-3 rounded-3xl md:rounded-full cartly-shadow border border-border/50 mb-10">
@@ -71,7 +71,7 @@ export default function Home() {
                 />
               </div>
               <Button type="submit" size="lg" className="w-full md:w-auto rounded-full bg-primary text-primary-foreground hover:bg-primary/90 px-8 h-14 text-base font-semibold shadow-md">
-                Search
+                Find my cart
               </Button>
             </form>
 
@@ -79,17 +79,17 @@ export default function Home() {
             <div className="flex flex-wrap items-center justify-center gap-6 md:gap-10 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
                 <Store className="h-4 w-4 text-primary" />
-                <span><strong className="text-foreground font-semibold">Vendor profiles</strong> built for real carts</span>
+                <span><strong className="text-foreground font-semibold">No account</strong> required</span>
               </div>
               <div className="hidden md:block w-px h-4 bg-border"></div>
               <div className="flex items-center gap-2">
                 <CalendarCheck className="h-4 w-4 text-primary" />
-                <span><strong className="text-foreground font-semibold">Booking requests</strong> sent directly to vendors</span>
+                <span><strong className="text-foreground font-semibold">Personal matching</strong> for your event</span>
               </div>
               <div className="hidden md:block w-px h-4 bg-border"></div>
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-primary" />
-                <span><strong className="text-foreground font-semibold">30-day free trial</strong> for early vendors</span>
+                <span><strong className="text-foreground font-semibold">Free to request</strong> with no obligation</span>
               </div>
             </div>
           </div>
@@ -103,7 +103,7 @@ export default function Home() {
             {CATEGORIES.map((cat) => (
               <Link 
                 key={cat.name} 
-                href={`/explore?category=${cat.name}`}
+                href={`/find-a-cart?category=${encodeURIComponent(cat.name)}&source=homepage-category`}
                 className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-background border border-border whitespace-nowrap hover:border-primary/40 hover:bg-primary/5 hover:text-primary transition-all snap-start font-medium text-sm cartly-shadow"
               >
                 <span className="text-lg">{cat.icon}</span>
@@ -114,22 +114,16 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Trending Section */}
+      {/* Concierge Section */}
       <section className="py-20 bg-background">
         <div className="container mx-auto px-4">
-          <div className="flex justify-between items-end mb-10">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-serif font-bold text-foreground mb-3">Trending near you</h2>
-              <p className="text-muted-foreground text-lg">New vendor profiles will appear here as carts join Vended.</p>
-            </div>
-            <Link href="/explore">
-              <Button variant="outline" className="hidden md:flex rounded-full border-border hover:bg-accent hover:text-foreground">
-                View all carts
-              </Button>
-            </Link>
+          <div className="mb-12 text-center">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-primary">Now launching in Chicago</p>
+            <h2 className="text-3xl md:text-4xl font-serif font-bold text-foreground mb-3">Give us the details. Skip the search.</h2>
+            <p className="mx-auto max-w-2xl text-muted-foreground text-lg">Vended is building Chicago’s curated specialty-cart collection. While profiles are being added, we’ll personally look for carts that fit your event.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
             {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => <VendorCardSkeleton key={i} />)
             ) : trendingData?.vendors?.length ? (
@@ -137,18 +131,14 @@ export default function Home() {
                 <VendorCard key={vendor.id} vendor={vendor} />
               ))
             ) : (
-              <div className="col-span-full py-12 text-center text-muted-foreground border border-dashed border-border rounded-2xl bg-card">
-                Real vendor profiles are coming soon. If you run a specialty cart, you can list yours today.
+              <div className="col-span-full rounded-3xl border border-primary/15 bg-primary/5 px-6 py-12 text-center">
+                <h3 className="mb-3 font-serif text-2xl font-bold text-foreground">Looking for something specific?</h3>
+                <p className="mx-auto mb-6 max-w-xl text-muted-foreground">Coffee cart for a wedding? Mocktail bar for an office party? Churros after dinner? Send one request and let us start looking.</p>
+                <Link href="/find-a-cart?source=homepage-concierge">
+                  <Button size="lg" className="rounded-full px-8">Find carts for my event</Button>
+                </Link>
               </div>
             )}
-          </div>
-          
-          <div className="mt-8 md:hidden flex justify-center">
-            <Link href="/explore">
-              <Button variant="outline" className="rounded-full w-full">
-                View all carts
-              </Button>
-            </Link>
           </div>
         </div>
       </section>
@@ -169,22 +159,22 @@ export default function Home() {
                 <div className="flex gap-4">
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-accent text-foreground flex items-center justify-center font-bold text-sm">1</div>
                   <div>
-                    <h4 className="font-bold text-foreground mb-1 text-lg">Discover</h4>
-                    <p className="text-muted-foreground">Browse curated carts in your city by vibe, price, and category.</p>
+                    <h4 className="font-bold text-foreground mb-1 text-lg">Tell us</h4>
+                    <p className="text-muted-foreground">Share your event date, location, guest count, and ideal cart.</p>
                   </div>
                 </div>
                 <div className="flex gap-4">
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-accent text-foreground flex items-center justify-center font-bold text-sm">2</div>
                   <div>
-                    <h4 className="font-bold text-foreground mb-1 text-lg">Request</h4>
-                    <p className="text-muted-foreground">Send a booking request with your event details and guest count.</p>
+                    <h4 className="font-bold text-foreground mb-1 text-lg">We search</h4>
+                    <p className="text-muted-foreground">Vended looks for matching operators and checks interest.</p>
                   </div>
                 </div>
                 <div className="flex gap-4">
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">3</div>
                   <div>
                     <h4 className="font-bold text-foreground mb-1 text-lg">Celebrate</h4>
-                    <p className="text-muted-foreground">The vendor confirms, shows up, and elevates your event.</p>
+                    <p className="text-muted-foreground">Available vendors respond with packages and next steps.</p>
                   </div>
                 </div>
               </div>
@@ -225,16 +215,16 @@ export default function Home() {
       <section id="vendors" className="py-20 bg-primary text-primary-foreground">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">Run a specialty cart?</h2>
-          <p className="text-primary-foreground/80 text-lg mb-8 max-w-xl mx-auto">Join Vended early and give event hosts a polished way to find and request your cart. Start with 30 days free, then Vended Pro is $29/month.</p>
+          <p className="text-primary-foreground/80 text-lg mb-8 max-w-xl mx-auto">Join Vended’s founding Chicago collection. We’ll help build your profile and send relevant event requests as they arrive.</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/signup?role=vendor">
+            <a href="mailto:info@tryvended.com?subject=Chicago%20Founding%20Vendor">
               <Button size="lg" className="rounded-full bg-white text-primary hover:bg-white/90 font-semibold px-8 h-12">
-                Start your free trial
+                Apply as a founding vendor
               </Button>
-            </Link>
+            </a>
             <div className="flex items-center gap-6 text-primary-foreground/70 text-sm">
-              <span>✓ No setup fees</span>
-              <span>✓ Cancel anytime</span>
+              <span>✓ No setup fee</span>
+              <span>✓ No commission</span>
             </div>
           </div>
         </div>

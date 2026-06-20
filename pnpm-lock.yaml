@@ -111,6 +111,9 @@ importers:
       stripe:
         specifier: ^22.2.0
         version: 22.2.0(@types/node@25.3.5)
+      zod:
+        specifier: 'catalog:'
+        version: 3.25.76
     devDependencies:
       '@types/bcryptjs':
         specifier: ^3.0.0

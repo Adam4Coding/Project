@@ -28,6 +28,9 @@ Optional:
 - `CORS_ORIGIN` (comma-separated origins)
 - `STATIC_DIR` (override frontend dist location)
 - `BASE_PATH` (frontend base path; defaults to `/`)
+- `RESEND_API_KEY` (send an email when a host requests cart matching)
+- `HOST_REQUEST_NOTIFICATION_EMAIL` (destination for new host requests)
+- `HOST_REQUEST_FROM_EMAIL` (verified sender for host-request notifications)
 
 ## 2) Install Dependencies
 
@@ -70,6 +73,8 @@ Optional DB setup:
 pnpm --filter @workspace/db run push
 pnpm --filter @workspace/scripts run seed
 ```
+
+Run the database push after pulling changes that add the `host_requests` table.
 
 ## 5) Docker Deployment
 

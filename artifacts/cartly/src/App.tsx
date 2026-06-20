@@ -16,6 +16,7 @@ import VendorProfile from "@/pages/vendor-profile";
 import CustomerDashboard from "@/pages/customer-dashboard";
 import VendorDashboard from "@/pages/vendor-dashboard";
 import Onboarding from "@/pages/onboarding";
+import FindACart from "@/pages/find-a-cart";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,6 +41,7 @@ function Router() {
           <Route path="/dashboard/customer" component={CustomerDashboard} />
           <Route path="/dashboard/vendor" component={VendorDashboard} />
           <Route path="/onboarding" component={Onboarding} />
+          <Route path="/find-a-cart" component={FindACart} />
           <Route component={NotFound} />
         </Switch>
       </main>
@@ -64,4 +66,3 @@ function App() {
 }
 
 export default App;
-
