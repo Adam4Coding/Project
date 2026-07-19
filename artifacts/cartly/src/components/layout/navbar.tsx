@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import { Compass, CalendarDays, Heart, User, LogOut, LayoutDashboard, ChevronDown } from "lucide-react";
+import { Compass, CalendarDays, Heart, User, LogOut, LayoutDashboard, ChevronDown, Search } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
@@ -44,8 +44,8 @@ export function Navbar() {
           </Link>
 
           <nav className="hidden md:flex items-center gap-1 text-sm font-medium text-muted-foreground">
-            <Link href="/explore" className={`px-3 py-2 rounded-lg hover:text-foreground hover:bg-muted/50 transition-colors ${location === "/explore" ? "text-foreground" : ""}`}>
-              Explore
+            <Link href="/find-a-cart?source=navbar" className={`px-3 py-2 rounded-lg hover:text-foreground hover:bg-muted/50 transition-colors ${location === "/find-a-cart" ? "text-foreground" : ""}`}>
+              Find a cart
             </Link>
 
             <DropdownMenu>
@@ -106,8 +106,8 @@ export function Navbar() {
                 <Link href="/login">
                   <Button variant="ghost" className="text-foreground hover:bg-muted">Log in</Button>
                 </Link>
-                <Link href="/signup">
-                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6">Sign up</Button>
+                <Link href="/find-a-cart?source=navbar-cta">
+                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6">Get free matches</Button>
                 </Link>
               </>
             )}
@@ -118,6 +118,10 @@ export function Navbar() {
       {/* Mobile Bottom Nav */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t bg-background pb-safe">
         <div className="flex justify-around items-center h-16">
+          <Link href="/find-a-cart?source=mobile-nav" className="flex flex-col items-center justify-center w-full h-full text-primary transition-colors">
+            <Search className="h-5 w-5 mb-1" />
+            <span className="text-[10px] font-semibold">Find a cart</span>
+          </Link>
           <Link href="/explore" className="flex flex-col items-center justify-center w-full h-full text-muted-foreground hover:text-primary transition-colors">
             <Compass className="h-5 w-5 mb-1" />
             <span className="text-[10px] font-medium">Explore</span>
