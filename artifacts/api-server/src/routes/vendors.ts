@@ -13,7 +13,6 @@ import { seededDemoVendorNames } from "../lib/demo-data-cleanup";
 
 const router: IRouter = Router();
 const hiddenSeededDemoCartNames = new Set(seededDemoVendorNames);
-const supportedSocialPromoPlatforms = new Set(["instagram", "tiktok", "facebook", "linkedin", "twitter", "x"]);
 
 function parseVendorProfile(vp: typeof vendorProfilesTable.$inferSelect) {
   return {
@@ -247,8 +246,8 @@ router.post("/onboarding", requireVendorAuth, async (req, res): Promise<void> =>
       galleryPhotos: JSON.stringify(galleryPhotos ?? []),
       startingPrice,
       packages: JSON.stringify(packages ?? []),
-      isActive: existingProfile.isActive,
-      subscriptionStatus: existingProfile.subscriptionStatus,
+      isActive: true,
+      subscriptionStatus: "active",
       onboardingComplete: true,
     })
     .where(eq(vendorProfilesTable.userId, authReq.user!.userId))
@@ -298,84 +297,11 @@ router.get("/vendor-stats", requireVendorAuth, async (req, res): Promise<void> =
 });
 
 router.post("/subscription/activate", requireVendorAuth, async (req, res): Promise<void> => {
-  res.status(410).json({ message: "Use Stripe Checkout to start your free month." });
+  res.status(410).json({ message: "Vended is now free. Completed vendor profiles are activated automatically." });
 });
 
 router.post("/subscription/social-promo", requireVendorAuth, async (req, res): Promise<void> => {
-  const authReq = req as AuthenticatedRequest;
-  const { platform, handle, proofUrl } = req.body as {
-    platform?: unknown;
-    handle?: unknown;
-    proofUrl?: unknown;
-  };
-
-  const cleanPlatform = typeof platform === "string" ? platform.trim().slice(0, 80) : "";
-  const cleanHandle = typeof handle === "string" ? handle.trim().slice(0, 120) : "";
-  const cleanProofUrl = typeof proofUrl === "string" ? proofUrl.trim().slice(0, 500) : "";
-  const normalizedPlatform = cleanPlatform.toLowerCase();
-  const proofUrlIsValid = (() => {
-    try {
-      const parsedUrl = new URL(cleanProofUrl);
-      return parsedUrl.protocol === "https:" || parsedUrl.protocol === "http:";
-    } catch {
-      return false;
-    }
-  })();
-
-  if (!cleanPlatform || !cleanHandle || !cleanProofUrl) {
-    res.status(400).json({ message: "Platform, handle, and proof link are required." });
-    return;
-  }
-
-  if (!supportedSocialPromoPlatforms.has(normalizedPlatform)) {
-    res.status(400).json({ message: "Use Instagram, TikTok, Facebook, LinkedIn, Twitter, or X." });
-    return;
-  }
-
-  if (!proofUrlIsValid) {
-    res.status(400).json({ message: "Proof must be a valid link to your story, post, or uploaded screenshot." });
-    return;
-  }
-
-  const [existing] = await db
-    .select()
-    .from(vendorProfilesTable)
-    .where(eq(vendorProfilesTable.userId, authReq.user!.userId))
-    .limit(1);
-
-  if (!existing) {
-    res.status(404).json({ message: "Vendor profile not found" });
-    return;
-  }
-
-  if (existing.subscriptionStatus === "inactive") {
-    res.status(400).json({ message: "Start your free month before submitting a bonus month request." });
-    return;
-  }
-
-  if (existing.socialPromoStatus === "pending") {
-    res.status(400).json({ message: "Your bonus month request is already under review." });
-    return;
-  }
-
-  if (existing.socialPromoStatus === "approved" || existing.bonusTrialEndsAt) {
-    res.status(400).json({ message: "Your bonus month has already been approved." });
-    return;
-  }
-
-  const [vp] = await db
-    .update(vendorProfilesTable)
-    .set({
-      socialPromoStatus: "pending",
-      socialPromoPlatform: normalizedPlatform,
-      socialPromoHandle: cleanHandle,
-      socialPromoProofUrl: cleanProofUrl,
-      socialPromoSubmittedAt: new Date(),
-    })
-    .where(eq(vendorProfilesTable.userId, authReq.user!.userId))
-    .returning();
-
-  res.json({ vendor: parseVendorProfile(vp) });
+  res.status(410).json({ message: "Bonus months are no longer needed because Vended is free." });
 });
 
 export default router;

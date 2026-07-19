@@ -26,7 +26,6 @@ import { Star, Calendar, Users, Eye, TrendingUp, Check, X as XIcon, Settings, Im
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getApiErrorMessage } from "@/lib/utils";
 
 const profileSchema = z.object({
@@ -67,25 +66,13 @@ function AnimatedCounter({ value }: { value: number }) {
   return <>{count}</>;
 }
 
-function formatTrialEnd(date?: string) {
-  if (!date) return "30 days";
-  return new Date(date).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
-}
-
 export default function VendorDashboard() {
   const [, setLocation] = useLocation();
-  const { isAuthenticated, isLoading: isLoadingAuth, user, vendorProfile, token } = useAuth();
+  const { isAuthenticated, isLoading: isLoadingAuth, user, vendorProfile } = useAuth();
   const queryClient = useQueryClient();
   
   const [declineBookingId, setDeclineBookingId] = useState<number | null>(null);
   const [declineReason, setDeclineReason] = useState("");
-  const [promoPlatform, setPromoPlatform] = useState("Instagram");
-  const [promoHandle, setPromoHandle] = useState("");
-  const [promoProofUrl, setPromoProofUrl] = useState("");
-  const [isSubmittingPromo, setIsSubmittingPromo] = useState(false);
-  const [isOpeningCheckout, setIsOpeningCheckout] = useState(false);
-  const [isOpeningBillingPortal, setIsOpeningBillingPortal] = useState(false);
-  const [hasHandledCheckoutReturn, setHasHandledCheckoutReturn] = useState(false);
 
   const { data: statsData, isLoading: isLoadingStats } = useGetVendorStats(
     { query: { enabled: isAuthenticated && user?.role === "vendor", queryKey: getGetVendorStatsQueryKey() } }
@@ -124,52 +111,6 @@ export default function VendorDashboard() {
       });
     }
   }, [profileData, form]);
-
-  useEffect(() => {
-    if (!isAuthenticated || user?.role !== "vendor" || !token || hasHandledCheckoutReturn) {
-      return;
-    }
-
-    const params = new URLSearchParams(window.location.search);
-    const checkoutStatus = params.get("checkout");
-    const sessionId = params.get("session_id");
-
-    if (checkoutStatus === "cancelled") {
-      setHasHandledCheckoutReturn(true);
-      toast.info("Stripe Checkout was cancelled. You can start your free month whenever you're ready.");
-      window.history.replaceState({}, "", "/dashboard/vendor");
-      return;
-    }
-
-    if (checkoutStatus !== "success" || !sessionId) {
-      return;
-    }
-
-    setHasHandledCheckoutReturn(true);
-    fetch("/api/subscription/reconcile", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ sessionId }),
-    })
-      .then(async (response) => {
-        const data = await response.json().catch(() => null);
-        if (!response.ok) {
-          throw new Error(data?.message || "Could not confirm your Stripe Checkout yet.");
-        }
-        toast.success("Your free month is active. Your cart is now live.");
-        queryClient.invalidateQueries({ queryKey: getGetMyVendorProfileQueryKey() });
-        queryClient.invalidateQueries({ queryKey: getGetVendorStatsQueryKey() });
-      })
-      .catch((err) => {
-        toast.error(err instanceof Error ? err.message : "Could not confirm your Stripe Checkout yet.");
-      })
-      .finally(() => {
-        window.history.replaceState({}, "", "/dashboard/vendor");
-      });
-  }, [hasHandledCheckoutReturn, isAuthenticated, queryClient, token, user?.role]);
 
   if (isLoadingAuth) {
     return (
@@ -223,139 +164,14 @@ export default function VendorDashboard() {
     );
   };
 
-  const handleActivateSub = () => {
-    setIsOpeningCheckout(true);
-    fetch("/api/subscription/checkout", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-    })
-      .then(async (response) => {
-        const data = await response.json().catch(() => null);
-        if (!response.ok) {
-          throw new Error(data?.message || "Could not open Stripe Checkout");
-        }
-        if (!data?.url) {
-          throw new Error("Stripe Checkout did not return a checkout link.");
-        }
-        window.location.assign(data.url);
-      })
-      .catch((err) => {
-        toast.error(err instanceof Error ? err.message : "Could not open Stripe Checkout");
-      })
-      .finally(() => {
-        setIsOpeningCheckout(false);
-      });
-  };
-
-  const handleOpenBillingPortal = () => {
-    setIsOpeningBillingPortal(true);
-    fetch("/api/subscription/portal", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-    })
-      .then(async (response) => {
-        const data = await response.json().catch(() => null);
-        if (!response.ok) {
-          throw new Error(data?.message || "Could not open billing settings");
-        }
-        if (!data?.url) {
-          throw new Error("Stripe did not return a billing link.");
-        }
-        window.location.assign(data.url);
-      })
-      .catch((err) => {
-        toast.error(err instanceof Error ? err.message : "Could not open billing settings");
-      })
-      .finally(() => {
-        setIsOpeningBillingPortal(false);
-      });
-  };
-
-  const handleSubmitSocialPromo = async () => {
-    if (!promoPlatform.trim() || !promoHandle.trim() || !promoProofUrl.trim()) {
-      toast.error("Add your platform, handle, and proof link.");
-      return;
-    }
-
-    setIsSubmittingPromo(true);
-    try {
-      const response = await fetch("/api/subscription/social-promo", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({
-          platform: promoPlatform,
-          handle: promoHandle,
-          proofUrl: promoProofUrl,
-        }),
-      });
-
-      const data = await response.json().catch(() => null);
-      if (!response.ok) {
-        throw new Error(data?.message || "Could not submit your promo request");
-      }
-
-      toast.success("Promo proof submitted. We will review it for your bonus month.");
-      setPromoProofUrl("");
-      queryClient.invalidateQueries({ queryKey: getGetMyVendorProfileQueryKey() });
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not submit your promo request");
-    } finally {
-      setIsSubmittingPromo(false);
-    }
-  };
-
-  const subscriptionStatus = profileData?.vendor?.subscriptionStatus;
-  const isProfileUnavailable = profileData?.vendor?.isActive === false;
-  const isFreeProfile = subscriptionStatus === "inactive";
-  const isTrialing = subscriptionStatus === "trialing";
-  const isPlanActive = subscriptionStatus === "active";
-  const trialEndsAt = profileData?.vendor?.trialEndsAt;
-  const hasUsedFreeTrial = Boolean(profileData?.vendor?.trialStartedAt || trialEndsAt);
-  const canStartFreeTrial = isFreeProfile && !hasUsedFreeTrial;
-  const hasStripeSubscription = Boolean((profileData?.vendor as { stripeSubscriptionId?: string } | undefined)?.stripeSubscriptionId);
-  const promoStatus = (profileData?.vendor as { socialPromoStatus?: string } | undefined)?.socialPromoStatus ?? "none";
-  const promoSubmittedAt = (profileData?.vendor as { socialPromoSubmittedAt?: string } | undefined)?.socialPromoSubmittedAt;
-  const bonusTrialEndsAt = (profileData?.vendor as { bonusTrialEndsAt?: string } | undefined)?.bonusTrialEndsAt;
-
   return (
     <PageTransition className="flex-1 bg-muted/20 py-8">
       <div className="container mx-auto px-4 max-w-6xl">
         
-        {isProfileUnavailable && (
-          <Alert className="mb-8 bg-amber-50 border-amber-200 text-amber-900 shadow-sm">
-            <AlertTitle className="font-serif font-bold text-lg flex items-center gap-2">
-              Your cart is not showing to customers yet
-            </AlertTitle>
-            <AlertDescription className="mt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <span>
-                {canStartFreeTrial
-                  ? "Start your free month to show your cart in Explore and start receiving booking requests."
-                  : "Your free month has ended, so your cart is hidden until Stripe billing is connected."}
-              </span>
-              {canStartFreeTrial ? (
-                <Button size="sm" onClick={handleActivateSub} disabled={isOpeningCheckout} className="bg-amber-600 hover:bg-amber-700 text-white shrink-0">
-                {isOpeningCheckout ? "Opening Stripe..." : "Start 30-day free trial"}
-                </Button>
-              ) : (
-                <span className="text-sm font-medium">Stripe setup is needed to turn your cart back on after the free month.</span>
-              )}
-            </AlertDescription>
-          </Alert>
-        )}
-
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl md:text-4xl font-serif font-bold text-foreground mb-2">Your Cart Dashboard</h1>
-            <p className="text-muted-foreground text-lg">See new booking requests, update your profile, and manage Vended Pro.</p>
+            <p className="text-muted-foreground text-lg">See new booking requests and keep your free public profile up to date.</p>
           </div>
           <Button variant="outline" className="gap-2" onClick={() => setLocation(`/vendor/${profileData?.vendor?.id}`)}>
             <Eye className="w-4 h-4" /> View Public Profile
@@ -411,7 +227,7 @@ export default function VendorDashboard() {
               Your Profile
             </TabsTrigger>
             <TabsTrigger value="subscription" className="rounded-lg px-6 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-medium">
-              Vended Pro
+              Free Plan
             </TabsTrigger>
           </TabsList>
 
@@ -620,109 +436,23 @@ export default function VendorDashboard() {
           </TabsContent>
 
           <TabsContent value="subscription">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="bg-card rounded-2xl border border-border p-8 cartly-shadow">
-                <div className="flex justify-between items-start mb-6">
-                  <div>
-                    <h2 className="font-serif font-bold text-2xl mb-2">Vended Pro</h2>
-                    <p className="text-muted-foreground">Vended Pro — first month free, then $29/month. Cancel anytime.</p>
-                  </div>
-                  <Badge className={isFreeProfile ? "bg-slate-500/10 text-slate-600 border-none" : "bg-emerald-500/10 text-emerald-600 border-none"}>
-                    {isFreeProfile ? "Free profile" : isTrialing ? "Free month" : "Pro is on"}
-                  </Badge>
+            <div className="bg-card rounded-2xl border border-border p-8 cartly-shadow max-w-3xl">
+              <div className="flex justify-between items-start gap-4 mb-6">
+                <div>
+                  <h2 className="font-serif font-bold text-2xl mb-2">Free Founding Vendor Plan</h2>
+                  <p className="text-muted-foreground">Your Vended profile is free with no trial, credit card, subscription, or commission.</p>
                 </div>
-                
-                <div className="mb-6">
-                  <div className="text-4xl font-serif font-bold">
-                    {isPlanActive ? "$29" : "$0"} <span className="text-lg text-muted-foreground font-sans font-normal">{isPlanActive ? "/month" : "today"}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    {isPlanActive ? "You are on Vended Pro." : "Vended Pro — first month free, then $29/month. Cancel anytime."}
-                  </p>
-                  {isTrialing && (
-                    <p className="text-sm font-medium text-primary mt-2">Your free month ends on {formatTrialEnd(trialEndsAt)}.</p>
-                  )}
-                </div>
-                
-                <ul className="space-y-3 mb-8">
-                  <li className="flex items-center gap-3"><Check className="w-5 h-5 text-primary" /> Listing on Explore page</li>
-                  <li className="flex items-center gap-3"><Check className="w-5 h-5 text-primary" /> Unlimited booking requests</li>
-                  <li className="flex items-center gap-3"><Check className="w-5 h-5 text-primary" /> Custom portfolio gallery</li>
-                  <li className="flex items-center gap-3"><Check className="w-5 h-5 text-primary" /> Vendor dashboard analytics</li>
-                </ul>
-                
-                {canStartFreeTrial ? (
-                  <Button onClick={handleActivateSub} disabled={isOpeningCheckout} className="w-full h-12 text-lg bg-primary hover:bg-primary/90">
-                    {isOpeningCheckout ? "Opening Stripe..." : "Start 30-day free trial"}
-                  </Button>
-                ) : hasStripeSubscription ? (
-                  <Button onClick={handleOpenBillingPortal} variant="outline" disabled={isOpeningBillingPortal} className="w-full">
-                    {isOpeningBillingPortal ? "Opening billing..." : "Manage billing"}
-                  </Button>
-                ) : isFreeProfile ? (
-                  <Button variant="outline" className="w-full" disabled>
-                    Stripe setup needed for paid plan
-                  </Button>
-                ) : (
-                  <Button variant="outline" className="w-full" disabled>
-                    {isTrialing ? "Your free month is on" : "You are on Vended Pro"}
-                  </Button>
-                )}
+                <Badge className="bg-emerald-500/10 text-emerald-600 border-none">Free</Badge>
               </div>
-
-              <div className="bg-card rounded-2xl border border-border p-8 cartly-shadow">
-                <div className="flex justify-between items-start gap-4 mb-6">
-                  <div>
-                    <h2 className="font-serif font-bold text-2xl mb-2">Bonus Month</h2>
-                    <p className="text-muted-foreground">Share Vended to your story, tag @tryvended, and submit proof for one extra free month.</p>
-                  </div>
-                  <Badge className={promoStatus === "approved" ? "bg-emerald-500/10 text-emerald-600 border-none" : promoStatus === "pending" ? "bg-amber-500/10 text-amber-600 border-none" : "bg-slate-500/10 text-slate-600 border-none"}>
-                    {promoStatus === "approved" ? "Approved" : promoStatus === "pending" ? "Under review" : "Available"}
-                  </Badge>
-                </div>
-
-                <ul className="space-y-3 mb-6 text-sm">
-                  <li className="flex items-center gap-3"><Check className="w-5 h-5 text-primary" /> Tag @tryvended in your story or post</li>
-                  <li className="flex items-center gap-3"><Check className="w-5 h-5 text-primary" /> Keep it live for at least 24 hours</li>
-                  <li className="flex items-center gap-3"><Check className="w-5 h-5 text-primary" /> Maximum one bonus month per vendor</li>
-                </ul>
-
-                {promoStatus === "approved" ? (
-                  <Alert className="bg-emerald-50 border-emerald-200 text-emerald-900">
-                    <AlertTitle>Bonus month approved</AlertTitle>
-                    <AlertDescription>
-                      {bonusTrialEndsAt ? `Your extended free period runs through ${formatTrialEnd(bonusTrialEndsAt)}.` : "Your bonus month has been added."}
-                    </AlertDescription>
-                  </Alert>
-                ) : promoStatus === "pending" ? (
-                  <Alert className="bg-amber-50 border-amber-200 text-amber-900">
-                    <AlertTitle>We have your proof</AlertTitle>
-                    <AlertDescription>
-                      {promoSubmittedAt ? `Submitted ${formatTrialEnd(promoSubmittedAt)}. ` : ""}We will review it before adding the extra month.
-                    </AlertDescription>
-                  </Alert>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="promoPlatform">Platform</Label>
-                        <Input id="promoPlatform" value={promoPlatform} onChange={(e) => setPromoPlatform(e.target.value)} placeholder="Instagram" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="promoHandle">Your handle</Label>
-                        <Input id="promoHandle" value={promoHandle} onChange={(e) => setPromoHandle(e.target.value)} placeholder="@yourcart" />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="promoProofUrl">Proof link or screenshot URL</Label>
-                      <Input id="promoProofUrl" value={promoProofUrl} onChange={(e) => setPromoProofUrl(e.target.value)} placeholder="Paste the story link or uploaded screenshot link" />
-                    </div>
-                    <Button onClick={handleSubmitSocialPromo} disabled={isSubmittingPromo} className="w-full h-12 bg-primary hover:bg-primary/90">
-                      {isSubmittingPromo ? "Submitting..." : "Submit for bonus month"}
-                    </Button>
-                  </div>
-                )}
+              <div className="text-4xl font-serif font-bold mb-6">
+                $0 <span className="text-lg text-muted-foreground font-sans font-normal">forever</span>
               </div>
+              <ul className="space-y-3">
+                <li className="flex items-center gap-3"><Check className="w-5 h-5 text-primary" /> Public listing on the Explore page</li>
+                <li className="flex items-center gap-3"><Check className="w-5 h-5 text-primary" /> Unlimited booking requests</li>
+                <li className="flex items-center gap-3"><Check className="w-5 h-5 text-primary" /> Custom portfolio gallery</li>
+                <li className="flex items-center gap-3"><Check className="w-5 h-5 text-primary" /> Vendor dashboard analytics</li>
+              </ul>
             </div>
           </TabsContent>
         </Tabs>

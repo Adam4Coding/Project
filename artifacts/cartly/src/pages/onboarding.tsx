@@ -377,17 +377,17 @@ export default function Onboarding() {
                 </div>
                 <h2 className="text-3xl font-serif font-bold mb-4">Ready to save your profile?</h2>
                 <p className="text-muted-foreground text-lg max-w-md mx-auto mb-8">
-                  Save your cart details now, then start your free month with Stripe Checkout from your dashboard.
+                  Save your cart details and your free profile will go live automatically.
                 </p>
                 
                 <div className="bg-card border-2 border-primary rounded-3xl p-8 max-w-sm mx-auto cartly-shadow relative overflow-hidden">
-                  <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-bl-xl">FIRST MONTH FREE</div>
-                  <h3 className="font-serif font-bold text-2xl mb-2">Vended Pro</h3>
-                  <div className="text-4xl font-serif font-bold mb-2">$0<span className="text-lg text-muted-foreground font-sans font-normal"> today</span></div>
-                  <p className="text-sm text-muted-foreground mb-6">Vended Pro — first month free, then $29/month. Cancel anytime.</p>
+                  <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-bl-xl">FREE</div>
+                  <h3 className="font-serif font-bold text-2xl mb-2">Founding Vendor Profile</h3>
+                  <div className="text-4xl font-serif font-bold mb-2">$0<span className="text-lg text-muted-foreground font-sans font-normal"> forever</span></div>
+                  <p className="text-sm text-muted-foreground mb-6">No trial, credit card, subscription, or commission.</p>
                   
                   <ul className="text-left space-y-3 mb-8">
-                    <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-primary" /> No charge for 30 days</li>
+                    <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-primary" /> Free profile with no expiration</li>
                     <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-primary" /> Listing on Explore page</li>
                     <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-primary" /> Unlimited bookings</li>
                     <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-primary" /> Custom gallery</li>

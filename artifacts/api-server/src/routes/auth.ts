@@ -54,7 +54,7 @@ router.post("/auth/signup", async (req, res): Promise<void> => {
       city: city ?? "",
       bio: "",
       isActive: false,
-      subscriptionStatus: "inactive",
+      subscriptionStatus: "active",
       onboardingComplete: false,
     }).returning();
     vendorProfile = toAuthVendorSummary(vp);

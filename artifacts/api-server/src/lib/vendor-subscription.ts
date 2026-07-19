@@ -1,6 +1,5 @@
 import { db, vendorProfilesTable } from "@workspace/db";
-import { and, eq, sql } from "drizzle-orm";
-import { getStripe } from "./stripe";
+import { eq, sql } from "drizzle-orm";
 
 export const VENDOR_PLAN_PRICE_MONTHLY = 29;
 export const VENDOR_FREE_TRIAL_DAYS = 30;
@@ -46,42 +45,16 @@ export function isVendorLive(vp: Pick<VendorProfileRecord, "isActive">) {
 }
 
 export async function normalizeVendorSubscription(vp: VendorProfileRecord) {
-  if (vp.subscriptionStatus !== "trialing" || !vp.trialEndsAt) {
+  if (!vp.onboardingComplete || (vp.isActive && vp.subscriptionStatus === "active")) {
     return vp;
   }
-
-  if (vp.trialEndsAt.getTime() > Date.now()) {
-    return vp;
-  }
-
-  const stripe = getStripe();
-  if (stripe && vp.stripeSubscriptionId) {
-    const subscription = await stripe.subscriptions.retrieve(vp.stripeSubscriptionId);
-    const subscriptionStatus =
-      subscription.status === "active" ? "active" : subscription.status === "trialing" ? "trialing" : "inactive";
-    const trialStartedAt = subscription.trial_start ? new Date(subscription.trial_start * 1000) : null;
-    const trialEndsAt = subscription.trial_end ? new Date(subscription.trial_end * 1000) : null;
-
-    const [updated] = await db
-      .update(vendorProfilesTable)
-      .set({
-        subscriptionStatus,
-        isActive: subscriptionStatus !== "inactive",
-        trialStartedAt,
-        trialEndsAt,
-      })
-      .where(eq(vendorProfilesTable.id, vp.id))
-      .returning();
-
-    return updated ?? vp;
-  }
-
-  // Legacy safeguard for vendors that somehow had a trial without Stripe.
   const [updated] = await db
     .update(vendorProfilesTable)
     .set({
-      subscriptionStatus: "inactive",
-      isActive: false,
+      subscriptionStatus: "active",
+      isActive: true,
+      trialStartedAt: null,
+      trialEndsAt: null,
     })
     .where(eq(vendorProfilesTable.id, vp.id))
     .returning();
@@ -90,62 +63,8 @@ export async function normalizeVendorSubscription(vp: VendorProfileRecord) {
 }
 
 export async function processPendingSocialPromoBonuses(now = new Date()) {
-  const reviewCutoff = new Date(now);
-  reviewCutoff.setHours(reviewCutoff.getHours() - SOCIAL_PROMO_REVIEW_HOURS);
-
-  const pendingPromos = await db
-    .select()
-    .from(vendorProfilesTable)
-    .where(eq(vendorProfilesTable.socialPromoStatus, "pending"));
-
-  const readyForApproval = pendingPromos.filter((vp) => {
-    return (
-      vp.onboardingComplete &&
-      vp.socialPromoSubmittedAt &&
-      vp.socialPromoSubmittedAt.getTime() <= reviewCutoff.getTime() &&
-      vp.socialPromoProofUrl.trim().length > 0
-    );
-  });
-
-  const approved = [];
-  for (const vp of readyForApproval) {
-    if (!vp.stripeSubscriptionId) {
-      continue;
-    }
-
-    const bonusTrialEndsAt = getBonusTrialEndDate(vp.trialEndsAt, now);
-    const stripe = getStripe();
-    if (stripe) {
-      await stripe.subscriptions.update(vp.stripeSubscriptionId, {
-        trial_end: Math.floor(bonusTrialEndsAt.getTime() / 1000),
-      });
-    }
-
-    const [updated] = await db
-      .update(vendorProfilesTable)
-      .set({
-        subscriptionStatus: "trialing",
-        isActive: true,
-        socialPromoStatus: "approved",
-        socialPromoApprovedAt: now,
-        trialEndsAt: bonusTrialEndsAt,
-        bonusTrialEndsAt,
-      })
-      .where(
-        and(
-          eq(vendorProfilesTable.id, vp.id),
-          eq(vendorProfilesTable.socialPromoStatus, "pending"),
-          eq(vendorProfilesTable.onboardingComplete, true),
-        ),
-      )
-      .returning();
-
-    if (updated) {
-      approved.push(updated);
-    }
-  }
-
-  return approved;
+  void now;
+  return [];
 }
 
 export function formatVendorSubscriptionFields(vp: VendorProfileRecord) {

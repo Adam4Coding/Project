@@ -36,8 +36,8 @@ export function Footer() {
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li><Link href="/signup?role=vendor" className="hover:text-primary transition-colors">List Your Cart</Link></li>
               <li><Link href="/login" className="hover:text-primary transition-colors">Vendor Login</Link></li>
-              <li><a href="/#vendors" className="hover:text-primary transition-colors">Vendor Trial</a></li>
-              <li><a href="/#vendors" className="hover:text-primary transition-colors">Pricing</a></li>
+              <li><a href="/#vendors" className="hover:text-primary transition-colors">Free Vendor Profiles</a></li>
+              <li><Link href="/find-a-cart" className="hover:text-primary transition-colors">Free Host Matching</Link></li>
             </ul>
           </div>
           

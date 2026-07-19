@@ -1,7 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { removeSeededDemoData } from "./lib/demo-data-cleanup";
-import { ensureVendorSubscriptionSchema, processPendingSocialPromoBonuses } from "./lib/vendor-subscription";
+import { ensureVendorSubscriptionSchema } from "./lib/vendor-subscription";
 
 const rawPort = process.env["PORT"] ?? "3000";
 const parsedPort = Number(rawPort);
@@ -23,20 +23,6 @@ async function startServer() {
     logger.info({ port }, "Server listening");
   });
 
-  void runSocialPromoBonusJob();
-  const socialPromoInterval = setInterval(runSocialPromoBonusJob, 24 * 60 * 60 * 1000);
-  socialPromoInterval.unref?.();
-}
-
-async function runSocialPromoBonusJob() {
-  try {
-    const approved = await processPendingSocialPromoBonuses();
-    if (approved.length > 0) {
-      logger.info({ approvedCount: approved.length }, "Approved social promo bonus months");
-    }
-  } catch (err) {
-    logger.error({ err }, "Social promo bonus job failed");
-  }
 }
 
 void startServer().catch((err) => {

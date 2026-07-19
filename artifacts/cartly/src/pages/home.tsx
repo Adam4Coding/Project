@@ -188,7 +188,7 @@ export default function Home() {
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-accent text-foreground flex items-center justify-center font-bold text-sm">1</div>
                   <div>
                     <h4 className="font-bold text-foreground mb-1 text-lg">List your cart</h4>
-                    <p className="text-muted-foreground">Create a beautiful profile with photos, pricing, and service area.</p>
+                    <p className="text-muted-foreground">Create a free profile with photos, pricing, and service area. No trial or commission.</p>
                   </div>
                 </div>
                 <div className="flex gap-4">
@@ -215,7 +215,7 @@ export default function Home() {
       <section id="vendors" className="py-20 bg-primary text-primary-foreground">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">Run a specialty cart?</h2>
-          <p className="text-primary-foreground/80 text-lg mb-8 max-w-xl mx-auto">Join Vended’s founding Chicago collection. We’ll help build your profile and send relevant event requests as they arrive.</p>
+          <p className="text-primary-foreground/80 text-lg mb-8 max-w-xl mx-auto">Join Vended’s founding Chicago collection for free. We’ll help build your profile and send relevant event requests as they arrive.</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a href="mailto:info@tryvended.com?subject=Chicago%20Founding%20Vendor">
               <Button size="lg" className="rounded-full bg-white text-primary hover:bg-white/90 font-semibold px-8 h-12">
@@ -225,6 +225,7 @@ export default function Home() {
             <div className="flex items-center gap-6 text-primary-foreground/70 text-sm">
               <span>✓ No setup fee</span>
               <span>✓ No commission</span>
+              <span>✓ No subscription</span>
             </div>
           </div>
         </div>
